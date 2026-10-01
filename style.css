@@ -1,0 +1,658 @@
+/* ==========================================================================
+   RESET & PALETA DE ALTO CONTRASTE WCAG 2.1 AA (ACESSIBILIDADE TEA)
+   Fundo Sólido: Azul Escuro Profundo (#0F172A), Fontes Claras (#F1F5F9)
+   Sem elementos infantis, visual corporativo e maduro para o Ensino Médio
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-site: #0F172A;              /* Azul escuro profundo e anti-fadiga */
+  --bg-card: #1E293B;              /* Superfície azulada para cards e painéis */
+  --bg-elevado: #334155;           /* Elementos de interface e botões secundários */
+  --texto-principal: #F1F5F9;      /* Contraste nítido e suave WCAG AA */
+  --texto-secundario: #94A3B8;     /* Texto de apoio legível */
+  --borda-suave: #334155;
+  --borda-forte: #475569;
+  --azul-destaque: #0284C7;        /* Destaque primário corporativo */
+  --azul-destaque-hover: #0369A1;
+  --azul-narracao: #0369A1;        /* Faixa técnica de narração */
+  --amarelo-hiperfoco: #F59E0B;    /* Realce amarelo sóbrio para hiperfoco */
+  --verde-acerto: #064E3B;         /* Feedback acessível de acerto */
+  --verde-borda: #10B981;
+  --vermelho-erro: #782929;        /* Feedback acessível de erro */
+  --vermelho-borda: #EF4444;
+  --tamanho-base: 18px;            /* Tamanho base confortável para leitura */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  background-color: #0F172A;
+  color: #F1F5F9;
+  font-size: var(--tamanho-base);
+  line-height: 1.7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   BARRA SUPERIOR (TOPO DO SITE)
+   ========================================================================== */
+.topo-site {
+  background-color: #0B1120;
+  border-bottom: 2px solid var(--borda-suave);
+  padding: 16px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-icone {
+  font-size: 28px;
+}
+
+.topo-site h1 {
+  font-size: 21px;
+  color: #FFFFFF;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.subtitulo-topo {
+  font-size: 13.5px;
+  color: var(--texto-secundario);
+}
+
+.controles-acessibilidade {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-acessivel {
+  background-color: var(--bg-card);
+  color: var(--texto-principal);
+  border: 1px solid var(--borda-forte);
+  padding: 9px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14.5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-acessivel:hover {
+  background-color: var(--bg-elevado);
+  border-color: var(--azul-destaque);
+}
+
+/* ==========================================================================
+   BARRA DE PROFILE DINÂMICA
+   ========================================================================== */
+.barra-profile {
+  background-color: #131E31;
+  border-bottom: 1px solid var(--borda-suave);
+  padding: 12px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tags-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-meta {
+  background-color: var(--bg-card);
+  border: 1px solid var(--borda-forte);
+  color: var(--texto-principal);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tag-destaque-hiperfoco {
+  background-color: #451A03;
+  border: 1px solid var(--amarelo-hiperfoco);
+  color: #FDE68A;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn-reconfigurar {
+  background: transparent;
+  color: var(--azul-destaque);
+  border: 1px solid var(--azul-destaque);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reconfigurar:hover {
+  background-color: var(--azul-destaque);
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   TELA 1: ONBOARDING CENTRALIZADO
+   ========================================================================== */
+.container-onboarding {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.card-onboarding {
+  background-color: var(--bg-card);
+  border: 1px solid var(--borda-suave);
+  border-radius: 14px;
+  padding: 36px;
+  max-width: 720px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.cabecalho-card h2 {
+  font-size: 23px;
+  color: #FFFFFF;
+  margin-bottom: 8px;
+}
+
+.cabecalho-card p {
+  font-size: 15.5px;
+  color: var(--texto-secundario);
+  margin-bottom: 26px;
+}
+
+.campo-grupo {
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label-obrigatorio {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.select-padrao, .input-padrao {
+  background-color: #0F172A;
+  border: 1.5px solid var(--borda-forte);
+  color: #F1F5F9;
+  padding: 13px 16px;
+  border-radius: 8px;
+  font-size: 15.5px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.select-padrao:focus, .input-padrao:focus {
+  border-color: var(--azul-destaque);
+}
+
+.dica-campo {
+  font-size: 13.5px;
+  color: var(--texto-secundario);
+}
+
+.btn-iniciar-aula {
+  background-color: var(--azul-destaque);
+  color: #FFFFFF;
+  border: none;
+  padding: 15px 24px;
+  font-size: 17px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-iniciar-aula:hover {
+  background-color: var(--azul-destaque-hover);
+}
+
+.btn-acesso-rapido {
+  background: transparent;
+  color: var(--texto-secundario);
+  border: 1px dashed var(--borda-forte);
+  padding: 12px 20px;
+  font-size: 14.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  transition: all 0.2s ease;
+}
+
+.btn-acesso-rapido:hover {
+  background-color: var(--bg-elevado);
+  color: #FFFFFF;
+  border-color: var(--azul-destaque);
+}
+
+/* ==========================================================================
+   TELA 2: ÁREA DE ESTUDOS (LAYOUT AULA)
+   ========================================================================== */
+.layout-aula {
+  display: flex;
+  flex: 1;
+  max-width: 1350px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 30px 24px;
+  gap: 28px;
+}
+
+.menu-lateral {
+  width: 310px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.painel-lateral {
+  background-color: var(--bg-card);
+  border: 1px solid var(--borda-suave);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.painel-lateral h3 {
+  font-size: 16.5px;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+}
+
+.botoes-modos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-modo {
+  background-color: #0F172A;
+  border: 1px solid var(--borda-forte);
+  color: var(--texto-principal);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-modo:hover {
+  background-color: var(--bg-elevado);
+}
+
+.btn-modo.ativo {
+  background-color: var(--azul-destaque);
+  border-color: var(--azul-destaque);
+  color: #FFFFFF;
+}
+
+.painel-tutor-destaque {
+  border-left: 4px solid var(--azul-destaque);
+}
+
+.painel-tutor-destaque p, .painel-aviso-seguro p {
+  font-size: 14px;
+  color: var(--texto-secundario);
+}
+
+.painel-aviso-seguro {
+  border-left: 4px solid #10B981;
+}
+
+/* ==========================================================================
+   ÁREA DE RENDERIZAÇÃO DA LIÇÃO & ELEMENTOS PEDAGÓGICOS
+   ========================================================================== */
+.conteudo-principal {
+  flex: 1;
+}
+
+.area-renderizacao-licao {
+  background-color: var(--bg-card);
+  border: 1px solid var(--borda-suave);
+  border-radius: 14px;
+  padding: 36px;
+}
+
+.secao-didatica {
+  margin-bottom: 32px;
+}
+
+.secao-didatica h2 {
+  font-size: 25px;
+  color: #FFFFFF;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--borda-suave);
+  padding-bottom: 8px;
+}
+
+.secao-didatica h3 {
+  font-size: 20px;
+  color: #E2E8F0;
+  margin: 24px 0 12px 0;
+}
+
+.secao-didatica p {
+  margin-bottom: 18px;
+  font-size: 17.5px;
+  line-height: 1.8;
+  color: #F1F5F9;
+}
+
+.bloco-destaque-hiperfoco {
+  background-color: #172554;
+  border-left: 4px solid var(--azul-destaque);
+  padding: 22px;
+  border-radius: 8px;
+  margin: 26px 0;
+}
+
+.bloco-destaque-hiperfoco h3 {
+  color: #60A5FA;
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   TABELAS TÉCNICAS DE ALTO CONTRASTE
+   ========================================================================== */
+.tabela-texturizada-container {
+  overflow-x: auto;
+  margin: 20px 0;
+}
+
+.tabela-texturizada {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #0B1120;
+  border: 1.5px solid var(--borda-forte);
+  border-radius: 8px;
+  font-size: 15.5px;
+}
+
+.tabela-texturizada th {
+  background-color: #1E293B;
+  color: #FFFFFF;
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 2px solid var(--borda-forte);
+  font-weight: 700;
+}
+
+.tabela-texturizada td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--borda-suave);
+  color: #F1F5F9;
+  line-height: 1.6;
+}
+
+.tabela-texturizada tr:nth-child(even) {
+  background-color: #0F172A;
+}
+
+/* ==========================================================================
+   ESTRUTURA DE QUADRINHOS / INFOGRÁFICO TÉCNICO MADURO (3 QUADROS)
+   ========================================================================== */
+.grade-gibi-maduro {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 36px;
+}
+
+.quadro-gibi {
+  background-color: #0F172A;
+  border: 2px solid var(--borda-forte);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.caixa-narra-azul {
+  background-color: var(--azul-narracao);
+  color: #FFFFFF;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.esquema-bloco-diagrama {
+  background-color: #1E293B;
+  border: 1px solid var(--borda-suave);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.esquema-bloco-diagrama .titulo-diagrama {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #38BDF8;
+  margin-bottom: 12px;
+}
+
+.esquema-bloco-diagrama p {
+  margin-bottom: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.balao-fala-maduro {
+  background-color: #1E293B;
+  border-left: 4px solid var(--azul-destaque);
+  padding: 16px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #F1F5F9;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   MAPA MENTAL EM BLOCOS ESTRUTURADOS
+   ========================================================================== */
+.mapa-container-blocos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin: 24px 0;
+}
+
+.card-bloco-mapa {
+  background-color: #0F172A;
+  border: 1.5px solid var(--borda-forte);
+  border-top: 4px solid var(--azul-destaque);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.card-bloco-mapa h4 {
+  font-size: 17px;
+  color: #38BDF8;
+  margin-bottom: 12px;
+}
+
+.card-bloco-mapa ul {
+  list-style: none;
+  font-size: 15.5px;
+}
+
+.card-bloco-mapa ul li {
+  margin-bottom: 10px;
+  padding-left: 14px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.card-bloco-mapa ul li::before {
+  content: '■';
+  position: absolute;
+  left: 0;
+  color: var(--azul-destaque);
+  font-size: 10px;
+  top: 5px;
+}
+
+/* ==========================================================================
+   EXERCÍCIO DE FIXAÇÃO & FEEDBACK ACESSÍVEL (VERDE #064E3B / VERMELHO #782929)
+   ========================================================================== */
+.container-quiz {
+  background-color: #0F172A;
+  border: 2px solid var(--borda-forte);
+  border-radius: 14px;
+  padding: 28px;
+  margin-top: 40px;
+}
+
+.cabecalho-quiz h3 {
+  font-size: 21px;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+}
+
+.enunciado-quiz {
+  font-size: 17px;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+.lista-alternativas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-alternativa {
+  background-color: var(--bg-card);
+  border: 1.5px solid var(--borda-forte);
+  color: #F1F5F9;
+  padding: 16px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  line-height: 1.5;
+}
+
+.btn-alternativa:hover:not(:disabled) {
+  background-color: var(--bg-elevado);
+  border-color: var(--azul-destaque);
+}
+
+/* Feedback Acessível de Cores */
+.btn-alternativa.correta {
+  background-color: #064E3B !important;
+  border-color: #10B981 !important;
+  color: #ECFDF5 !important;
+  font-weight: 700;
+}
+
+.btn-alternativa.incorreta {
+  background-color: #782929 !important;
+  border-color: #EF4444 !important;
+  color: #FEF2F2 !important;
+}
+
+.caixa-feedback {
+  margin-top: 20px;
+  padding: 18px 22px;
+  border-radius: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.caixa-feedback.sucesso {
+  background-color: #064E3B;
+  border: 1.5px solid #10B981;
+  color: #ECFDF5;
+}
+
+.caixa-feedback.alerta {
+  background-color: #782929;
+  border: 1.5px solid #EF4444;
+  color: #FEF2F2;
+}
+
+/* ==========================================================================
+   MODO DE FOCO (OCULTA TOPO E MENU LATERAL / MAX-WIDTH 850px CENTRALIZADO)
+   ========================================================================== */
+body.modo-foco-ativo #topoSite,
+body.modo-foco-ativo #barraProfile,
+body.modo-foco-ativo #menuLateral {
+  display: none !important;
+}
+
+body.modo-foco-ativo .layout-aula {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 30px 16px;
+  justify-content: center;
+}
+
+body.modo-foco-ativo .conteudo-principal {
+  max-width: 850px;
+  width: 100%;
+}
+
+.btn-sair-foco {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  background-color: var(--azul-destaque);
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.btn-sair-foco:hover {
+  background-color: var(--azul-destaque-hover);
+}
+
+body.modo-foco-ativo .btn-sair-foco {
+  display: block !important;
+}

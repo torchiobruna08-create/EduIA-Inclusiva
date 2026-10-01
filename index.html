@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plataforma Adaptativa DUA - História: Feudalismo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       BARRA SUPERIOR DE ACESSIBILIDADE E TOPO
+       ========================================================================= -->
+  <header id="topoSite" class="topo-site">
+    <div class="logo-area">
+      <div class="logo-icone" aria-hidden="true">🏛️</div>
+      <div>
+        <h1>História Medieval: O Feudalismo Europeu</h1>
+        <p class="subtitulo-topo">Plataforma Adaptativa DUA — Ensino Médio</p>
+      </div>
+    </div>
+    
+    <div class="controles-acessibilidade">
+      <button id="btnModoFoco" class="btn-acessivel" onclick="alternarModoFoco()" aria-label="Ativar ou desativar Modo de Foco">
+        Modo de Foco
+      </button>
+      <button id="btnOuvirAula" class="btn-acessivel" onclick="alternarLeituraTexto()" aria-label="Ouvir conteúdo da aula com voz pausada">
+        Ouvir Aula
+      </button>
+      <button id="btnAumentarFonte" class="btn-acessivel" onclick="alterarFonte(2)" aria-label="Aumentar tamanho do texto">A+</button>
+      <button id="btnDiminuirFonte" class="btn-acessivel" onclick="alterarFonte(-2)" aria-label="Diminuir tamanho do texto">A-</button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       BARRA DE PROFILE DINÂMICA (PROFILE SUMMARY)
+       ========================================================================= -->
+  <section id="barraProfile" class="barra-profile" style="display: none;" aria-label="Resumo do perfil pedagógico">
+    <div class="tags-container">
+      <span class="tag-meta" id="tagDificuldade">Dificuldade: --</span>
+      <span class="tag-meta" id="tagEstilo">Estilo: --</span>
+      <span class="tag-meta" id="tagTutor">Tutor: --</span>
+      <span class="tag-destaque-hiperfoco" id="tagHiperfoco" style="display: none;" role="status">
+        Hiperfoco Detectado: <strong id="textoHiperfocoTag"></strong> (Conteúdo Adaptado)
+      </span>
+    </div>
+    <button class="btn-reconfigurar" onclick="redefinirPerfil()" aria-label="Redefinir Perfil">⚙️ Redefinir Perfil</button>
+  </section>
+
+  <!-- =========================================================================
+       TELA 1: ONBOARDING CENTRALIZADO
+       ========================================================================= -->
+  <main id="telaOnboarding" class="container-onboarding">
+    <div class="card-onboarding">
+      <div class="cabecalho-card">
+        <h2>Configuração de Aprendizagem Adaptativa</h2>
+        <p>Personalize as preferências metodológicas e cognitivas para o estudo do Feudalismo Europeu.</p>
+      </div>
+
+      <form id="formOnboarding" onsubmit="salvarPerfil(event)">
+        
+        <!-- Pergunta 1: Nível de Dificuldade com Aprofundamento Historiográfico -->
+        <div class="campo-grupo">
+          <label for="campoDificuldade" class="label-obrigatorio">1. Nível de Aprofundamento Historiográfico:</label>
+          <select id="campoDificuldade" class="select-padrao" required>
+            <option value="Baixo" selected>Baixo — Análise historiográfica direta, com linguagem acessível e foco estrutural</option>
+            <option value="Médio">Médio — Interpretação documental intermediária e relações socioeconômicas</option>
+            <option value="Alto">Alto — Análise historiográfica densa, conceitos avançados e fontes documentais</option>
+          </select>
+        </div>
+
+        <!-- Pergunta 2: Estilo DUA / Mídia -->
+        <div class="campo-grupo">
+          <label for="campoEstilo" class="label-obrigatorio">2. Formato de Apresentação e Mídia Preferida:</label>
+          <select id="campoEstilo" class="select-padrao" required>
+            <option value="quadrinhos" selected>Quadrinhos / Diagramas Técnicos (Infográfico Sequencial)</option>
+            <option value="texto">Texto Corrido Analítico (Ensaio Historiográfico)</option>
+            <option value="mapa">Mapa Mental e Relações Estruturais (Esquemas em Blocos)</option>
+            <option value="audio">Áudio Orientado (Leitura e Síntese Pausada)</option>
+          </select>
+        </div>
+
+        <!-- Pergunta 3: Painel do Tutor -->
+        <div class="campo-grupo">
+          <label for="campoTutor" class="label-obrigatorio">3. Painel de Suporte ao Tutor / AEE:</label>
+          <select id="campoTutor" class="select-padrao" required>
+            <option value="Sim" selected>Ativado — Recomendações pedagógicas para mediador/educador</option>
+            <option value="Não">Desativado — Navegação autônoma do estudante</option>
+          </select>
+        </div>
+
+        <!-- Pergunta 4: Entrada de Hiperfoco -->
+        <div class="campo-grupo">
+          <label for="textoHiperfoco" class="label-obrigatorio">4. Tópico de Interesse / Hiperfoco Técnico:</label>
+          <input type="text" id="textoHiperfoco" class="input-padrao" placeholder="Ex.: mecânica, engrenagens, robótica, motores, castelos..." required>
+          <span class="dica-campo">A plataforma contextualizará os mecanismos socioeconômicos feudais utilizando pontes conceituais com sua área de interesse.</span>
+        </div>
+
+        <button type="submit" class="btn-iniciar-aula">Iniciar Aula Adaptada</button>
+        <button type="button" class="btn-acesso-rapido" onclick="entrarDiretoNaAula()">Acesso Rápido com Engenharia Mecânica Medieval</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       TELA 2: ÁREA DE ESTUDOS E AULA (INICIA OCULTA)
+       ========================================================================= -->
+  <div id="telaAula" class="layout-aula" style="display: none;">
+    
+    <!-- Menu Lateral Adaptativo -->
+    <aside id="menuLateral" class="menu-lateral" aria-label="Menu de Navegação Adaptativa">
+      
+      <section class="painel-lateral">
+        <h3>Formato de Exibição</h3>
+        <div class="botoes-modos">
+          <button class="btn-modo" id="btnModoTexto" onclick="trocarModo('texto')">Texto Analítico</button>
+          <button class="btn-modo" id="btnModoQuadrinhos" onclick="trocarModo('quadrinhos')">Quadrinhos / Infográfico</button>
+          <button class="btn-modo" id="btnModoMapa" onclick="trocarModo('mapa')">Mapa Mental</button>
+          <button class="btn-modo" id="btnModoAudio" onclick="trocarModo('audio')">Modo Áudio</button>
+        </div>
+      </section>
+
+      <section id="secaoPainelTutor" class="painel-lateral painel-tutor-destaque">
+        <h3>Orientações Pedagógicas (Tutor/AEE)</h3>
+        <p id="textoOrientacaoTutor">O estudante realiza a leitura adaptada em formato multinível. Permita o processamento em tempo livre sem cobrança temporal externa.</p>
+      </section>
+
+      <section class="painel-lateral painel-aviso-seguro">
+        <h3>Estrutura Livre de Ansiedade</h3>
+        <p>Ambiente autônomo sem contadores regressivos. Faça pausas e releituras conforme sua necessidade cognitiva.</p>
+      </section>
+
+    </aside>
+
+    <!-- Área Principal de Renderização da Lição -->
+    <main id="conteudoPrincipal" class="conteudo-principal" tabindex="-1">
+      <article id="areaRenderizacaoLicao" class="area-renderizacao-licao" aria-live="polite">
+        <!-- Injetado dinamicamente via script.js -->
+      </article>
+    </main>
+
+  </div>
+
+  <!-- Botão Flutuante para Sair do Modo de Foco -->
+  <button id="btnSairModoFoco" class="btn-sair-foco" onclick="alternarModoFoco()" style="display: none;" aria-label="Sair do Modo de Foco">
+    Sair do Modo de Foco
+  </button>
+
+  <script src="script.js"></script>
+</body>
+</html>

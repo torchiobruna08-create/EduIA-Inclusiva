@@ -1,0 +1,12 @@
+{
+  "name": "EduIA Inclusiva",
+  "short_name": "EduIA",
+  "description": "Plataforma educacional inclusiva e adaptativa.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071522",
+  "theme_color": "#071522",
+  "lang": "pt-BR"
+}

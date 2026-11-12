@@ -1,512 +1,1000 @@
-// ==========================================================================
-// ESTADO GLOBAL DO APLICATIVO (SEM CRONÔMETROS NEM CONTAGENS REGRESSIVAS)
-// ==========================================================================
-const estado = {
-  dificuldade: 'Baixo',
-  estilo: 'quadrinhos',
-  tutorAtivo: 'Sim',
-  termoHiperfoco: '',
-  hiperfocoDetectado: false,
-  modoFoco: false,
-  lendoAudio: false,
-  tamanhoFonte: 18
+
+"use strict";
+
+/* ==========================================
+   EDUIA INCLUSIVA — JAVASCRIPT PRINCIPAL
+========================================== */
+
+const supabaseClient = window.eduiaSupabase || null;
+let supabaseUser = null;
+let creatorStudentsCache = [];
+
+async function ensureSupabaseStudent() {
+  if (!supabaseClient) return null;
+  const { data: current, error: currentError } = await supabaseClient.auth.getSession();
+  if (currentError) throw currentError;
+  if (current.session?.user) { supabaseUser = current.session.user; return supabaseUser; }
+  const { data, error } = await supabaseClient.auth.signInAnonymously();
+  if (error) throw error;
+  supabaseUser = data.user;
+  return supabaseUser;
+}
+
+async function dbSaveStudent(profile) {
+  if (!supabaseClient || !supabaseUser) return;
+  const { error } = await supabaseClient.from("students").upsert({
+    id: supabaseUser.id,
+    grade: profile.grade || "1º ano do Ensino Médio"
+  }, { onConflict: "id" });
+  if (error) throw error;
+  const { error: accessError } = await supabaseClient.from("access_events").insert({
+    student_id: supabaseUser.id, event_type: "session_started"
+  });
+  if (accessError) throw accessError;
+}
+
+async function dbSavePreferences(value) {
+  if (!supabaseClient || !supabaseUser) return;
+  const { error } = await supabaseClient.from("learning_preferences").upsert({
+    student_id: supabaseUser.id,
+    learning_styles: value.learningStyle || [],
+    text_level: value.textLevel || "medium",
+    help_styles: value.helpStyle || [],
+    study_mode: value.studyMode || "both"
+  }, { onConflict: "student_id" });
+  if (error) throw error;
+}
+
+async function dbSaveProgress(period, topic) {
+  if (!supabaseClient || !supabaseUser || !period || !topic) return;
+  const { error } = await supabaseClient.from("lesson_progress").insert({
+    student_id: supabaseUser.id, historical_period: period, topic, completed: true
+  });
+  if (error) throw error;
+}
+
+async function dbSaveQuiz(period, correct, total, percentage) {
+  if (!supabaseClient || !supabaseUser || !period || !total) return;
+  const { error } = await supabaseClient.from("quiz_attempts").insert({
+    student_id: supabaseUser.id, historical_period: period,
+    correct_answers: correct, total_questions: total
+  });
+  if (error) throw error;
+}
+
+const STORAGE_KEYS = {
+  students: "eduia_students",
+  accesses: "eduia_accesses",
+  session: "eduia_current_session",
+  font: "eduia_font_scale"
 };
 
-// ==========================================================================
-// BANCO DE DADOS HISTORIOGRÁFICO EXPANDIDO - ENSINO MÉDIO
-// ==========================================================================
-const conteudoLicao = {
-  geral: {
-    titulo: "A Estrutura e Dinâmica do Feudalismo na Europa Ocidental",
-    introducao: "O feudalismo consolidou-se na Europa Ocidental a partir da fragmentação do Império Carolíngio e das invasões dos séculos IX e X. O sistema caracterizou-se pela descentralização política, economia agrária de subsistência e forte imobilidade social sustentada por laços de dependência pessoal.",
-    politica: "No âmbito político-institucional, vigoravam as relações feudo-vassálicas entre nobres, regidas por juramentos solenes de homenagem e fidelidade. O suserano concedia o feudo (terras, direitos de tributação ou rendas) e garantia proteção, enquanto o vassalo prestava auxílio militar compulsório (auxilium) e aconselhamento nas decisões senhoriais (consilium).",
-    sociedade: "A sociedade feudal organizava-se de forma estamental e hierarquizada, legitimada pela ideologia eclesiástica das Três Ordens: o Clero (Oratores - os que oram), a Nobreza (Bellatores - os que combatem e detêm a terra) e os Servos (Laboratores - a ampla base camponesa desprovida de privilégios que sustentava as ordens superiores)."
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+
+function readStorage(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function saveStorage(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error("Erro ao salvar:", error);
+  }
+}
+
+let student = null;
+let preferences = null;
+let selectedPeriod = null;
+let currentTopic = "introduction";
+let currentQuestion = 0;
+let score = 0;
+let quizQuestions = [];
+let answered = false;
+let currentFontScale = Number(readStorage(STORAGE_KEYS.font, 1)) || 1;
+
+/* ==========================================
+   CONTEÚDOS HISTÓRICOS
+========================================== */
+
+const periodData = {
+  antiguidade: {
+    title: "Idade Antiga",
+    symbol: "🏺",
+    description: "Conheça as primeiras grandes civilizações e suas transformações.",
+    introduction: "A Idade Antiga é um período histórico marcado pelo desenvolvimento de grandes civilizações, cidades, escritas, governos e conhecimentos. Entre seus exemplos estão o Egito, a Mesopotâmia, a Grécia e Roma.",
+    highlights: [
+      "🏛️ Desenvolvimento das cidades e dos Estados.",
+      "✍️ Surgimento de diferentes sistemas de escrita.",
+      "🌾 Agricultura e organização das sociedades."
+    ],
+    topics: {
+      introduction: {
+        title: "O que foi a Idade Antiga?",
+        text: "A Idade Antiga começou tradicionalmente com o surgimento da escrita, por volta de 4000 a.C. Esse período reúne sociedades que desenvolveram conhecimentos, leis, religiões, cidades e formas de organização política."
+      },
+      context: {
+        title: "Contexto histórico",
+        text: "O crescimento da agricultura permitiu que grupos humanos se estabelecessem em determinadas regiões. Próximo a rios, como o Nilo e o Tigre e Eufrates, surgiram sociedades organizadas, com produção de alimentos, comércio e governos."
+      },
+      events: {
+        title: "Principais acontecimentos",
+        text: "Entre os acontecimentos importantes estão o desenvolvimento da escrita na Mesopotâmia, a construção das pirâmides no Egito, a formação das cidades-Estado gregas e a expansão de Roma."
+      },
+      characters: {
+        title: "Personagens e grupos importantes",
+        text: "Faraós governavam o Egito. Na Grécia, cidadãos participavam de algumas decisões políticas, embora grande parte da população fosse excluída. Em Roma, senadores, imperadores, soldados e trabalhadores participavam de uma sociedade hierarquizada."
+      },
+      consequences: {
+        title: "Consequências e legado",
+        text: "As sociedades antigas deixaram contribuições importantes, como conhecimentos matemáticos, arquitetônicos, filosóficos, jurídicos e políticos. Muitas dessas ideias influenciam o mundo atual."
+      },
+      curiosities: {
+        title: "Curiosidades",
+        text: "Os egípcios desenvolveram técnicas de mumificação. Na Grécia Antiga surgiram os Jogos Olímpicos. O direito romano influenciou sistemas jurídicos utilizados em diversos países."
+      }
+    },
+    summary: [
+      "A Idade Antiga começou tradicionalmente com o surgimento da escrita.",
+      "Civilizações importantes foram Egito, Mesopotâmia, Grécia e Roma.",
+      "A agricultura e os rios favoreceram o desenvolvimento das cidades.",
+      "O período deixou contribuições para a ciência, política, arte e cultura."
+    ],
+    comics: [
+      ["🌾", "A agricultura", "A produção de alimentos permitiu que grupos humanos se estabelecessem em determinadas regiões."],
+      ["✍️", "O surgimento da escrita", "A escrita ajudou a registrar informações, leis e atividades comerciais."],
+      ["🏛️", "As cidades antigas", "Cidades cresceram e desenvolveram governos, construções e comércio."],
+      ["⚖️", "As leis", "Diferentes sociedades criaram regras para organizar a convivência."]
+    ],
+    gallery: [
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/The%20pyramids%20of%20Giza.jpg?width=900",
+        "Pirâmides de Gizé",
+        "As pirâmides foram construídas no Egito Antigo e estão relacionadas ao poder dos faraós e às crenças sobre a vida após a morte.",
+        "https://commons.wikimedia.org/wiki/File:The_pyramids_of_Giza.jpg"
+      ],
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Parthenon%2C%20Athens%2C%20Greece.jpg?width=900",
+        "Partenon de Atenas",
+        "Templo da Grécia Antiga dedicado à deusa Atena. É um exemplo importante da arquitetura grega.",
+        "https://commons.wikimedia.org/wiki/File:Parthenon,_Athens,_Greece.jpg"
+      ],
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Colosseum%20-%20Rome.jpg?width=900",
+        "Coliseu de Roma",
+        "Grande anfiteatro romano utilizado para espetáculos públicos e eventos da sociedade romana.",
+        "https://commons.wikimedia.org/wiki/File:Colosseum_-_Rome.jpg"
+      ]
+    ],
+    questions: [
+      {
+        question: "Qual acontecimento é tradicionalmente utilizado para marcar o início da Idade Antiga?",
+        options: ["A invenção da imprensa", "O surgimento da escrita", "A Revolução Industrial", "A chegada à Lua"],
+        answer: 1,
+        explanation: "O surgimento da escrita é tradicionalmente utilizado como marco inicial da Idade Antiga."
+      },
+      {
+        question: "Qual rio foi fundamental para o desenvolvimento do Egito Antigo?",
+        options: ["Rio Nilo", "Rio Amazonas", "Rio Sena", "Rio Tâmisa"],
+        answer: 0,
+        explanation: "O rio Nilo favoreceu a agricultura, o transporte e a organização da sociedade egípcia."
+      },
+      {
+        question: "Qual civilização é conhecida por suas contribuições à filosofia?",
+        options: ["Asteca", "Inca", "Grega", "Viking"],
+        answer: 2,
+        explanation: "A Grécia Antiga é conhecida por suas contribuições à filosofia e à política."
+      },
+      {
+        question: "Qual foi uma importante contribuição das sociedades antigas?",
+        options: ["A internet", "A aviação comercial", "Os computadores", "A escrita e conhecimentos matemáticos"],
+        answer: 3,
+        explanation: "A escrita e os conhecimentos matemáticos foram contribuições fundamentais."
+      }
+    ]
   },
-  hiperfocoMecanico: {
-    titulo: "Engenharia Mecânica Medieval: O Feudo como Sistema Tecnológico Integrado",
-    resumo: "Sob a perspectiva da história da tecnologia e da física aplicada, o feudo operava como um sistema mecânico integrado de conversão e transferência de energia. A difusão dos moinhos hidráulicos e de vento, equipados com eixos de cames e engrenagens de madeira, revolucionou o processamento de grãos, a moagem e a forja, tornando o controle tecnológico um instrumento central de poder senhorial."
+
+  "idade-media": {
+    title: "Idade Média",
+    symbol: "🏰",
+    description: "Explore a sociedade medieval, o feudalismo e suas transformações.",
+    introduction: "A Idade Média é tradicionalmente situada entre o século V e o século XV. Foi marcada por transformações políticas, econômicas, sociais e culturais na Europa, além de importantes sociedades em outras regiões do mundo.",
+    highlights: [
+      "🏰 Organização social e política do feudalismo.",
+      "🌾 Agricultura como importante atividade econômica.",
+      "📜 Transformações culturais e comerciais."
+    ],
+    topics: {
+      introduction: {
+        title: "O que foi a Idade Média?",
+        text: "A Idade Média é um período da História que começou tradicionalmente em 476, com a queda do Império Romano do Ocidente, e terminou convencionalmente em 1453, com a conquista de Constantinopla pelos otomanos."
+      },
+      context: {
+        title: "Contexto histórico",
+        text: "Na Europa Ocidental, ocorreram mudanças na organização política após a fragmentação do Império Romano. A agricultura ganhou importância e diferentes relações de dependência e poder se desenvolveram no campo."
+      },
+      events: {
+        title: "Principais acontecimentos",
+        text: "Entre os acontecimentos estão a expansão do cristianismo na Europa, o desenvolvimento do feudalismo, o crescimento das cidades, as Cruzadas, a expansão comercial e a crise do século XIV."
+      },
+      characters: {
+        title: "Personagens e grupos importantes",
+        text: "A sociedade medieval europeia incluía nobres, membros do clero, camponeses, artesãos e comerciantes. Em outras regiões, diferentes povos desenvolveram grandes centros urbanos, conhecimentos científicos e redes comerciais."
+      },
+      consequences: {
+        title: "Consequências e legado",
+        text: "A Idade Média deixou marcas na arquitetura, na arte, na filosofia, nas instituições religiosas e na formação de diferentes reinos europeus."
+      },
+      curiosities: {
+        title: "Curiosidades",
+        text: "Castelos eram construídos para defesa e demonstração de poder. Manuscritos eram copiados à mão. As universidades medievais contribuíram para a organização do ensino."
+      }
+    },
+    summary: [
+      "A Idade Média é tradicionalmente situada entre os séculos V e XV.",
+      "O feudalismo marcou parte da organização social e econômica europeia.",
+      "A agricultura tinha grande importância.",
+      "O comércio e as cidades cresceram ao longo do período."
+    ],
+    comics: [
+      ["🏰", "O castelo", "Castelos eram construções ligadas à defesa e ao poder de determinados grupos."],
+      ["🌾", "A vida no campo", "A agricultura era uma atividade central na economia medieval europeia."],
+      ["📜", "Os manuscritos", "Livros eram copiados manualmente e preservados em diferentes instituições."],
+      ["🏙️", "O crescimento das cidades", "O comércio contribuiu para a expansão de centros urbanos."]
+    ],
+    gallery: [
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Medieval%20Castle.jpg?width=900",
+        "Castelo medieval",
+        "Castelos eram construções ligadas à defesa, à autoridade e às relações de poder da sociedade medieval.",
+        "https://commons.wikimedia.org/wiki/File:Medieval_Castle.jpg"
+      ],
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Medieval%20castle.jpg?width=900",
+        "Arquitetura medieval",
+        "Construções medievais permitem observar características da arquitetura defensiva e das relações de poder da época.",
+        "https://commons.wikimedia.org/wiki/File:Medieval_castle.jpg"
+      ],
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Illuminated%20manuscript.jpg?width=900",
+        "Manuscrito ilustrado",
+        "Manuscritos eram produzidos e decorados manualmente, preservando conhecimentos e registros de diferentes épocas.",
+        "https://commons.wikimedia.org/wiki/File:Illuminated_manuscript.jpg"
+      ]
+    ],
+    questions: [
+      {
+        question: "Qual acontecimento é tradicionalmente utilizado como marco inicial da Idade Média?",
+        options: ["Queda do Império Romano do Ocidente", "Revolução Francesa", "Primeira Guerra Mundial", "Independência do Brasil"],
+        answer: 0,
+        explanation: "A queda do Império Romano do Ocidente, em 476, é um marco tradicional do início da Idade Média."
+      },
+      {
+        question: "Qual atividade tinha grande importância na economia medieval europeia?",
+        options: ["Indústria automobilística", "Agricultura", "Produção de computadores", "Aviação"],
+        answer: 1,
+        explanation: "A agricultura era uma atividade fundamental na economia medieval europeia."
+      },
+      {
+        question: "Qual grupo estava associado às atividades religiosas na Europa medieval?",
+        options: ["Operários industriais", "Exploradores espaciais", "Clero", "Empresários digitais"],
+        answer: 2,
+        explanation: "O clero era o grupo ligado às instituições religiosas."
+      },
+      {
+        question: "O que contribuiu para o crescimento de muitas cidades medievais?",
+        options: ["A internet", "A televisão", "A indústria eletrônica", "A expansão do comércio"],
+        answer: 3,
+        explanation: "A expansão das atividades comerciais contribuiu para o crescimento de cidades."
+      }
+    ]
   },
-  tabelaMecanicaObrigacoes: [
-    {
-      componente: "Moinho Hidráulico & Roda d'Água",
-      funcao: "Conversão de energia cinética hídrica em trabalho mecânico para moagem de grãos e serragem.",
-      obrigacao: "Banalidades",
-      explicacao: "Taxa compulsória cobrada pelo senhor pelo uso exclusivo das instalações mecânicas do feudo (moinho, forno e lagar)."
+
+  "idade-moderna": {
+    title: "Idade Moderna",
+    symbol: "⛵",
+    description: "Descubra o Renascimento, as navegações e as transformações políticas.",
+    introduction: "A Idade Moderna é tradicionalmente situada entre os séculos XV e XVIII. O período foi marcado por mudanças culturais, científicas, econômicas e políticas, incluindo o Renascimento, as navegações oceânicas e o fortalecimento das monarquias.",
+    highlights: [
+      "🎨 Renascimento cultural e científico.",
+      "⛵ Expansão marítima europeia.",
+      "👑 Fortalecimento de monarquias nacionais."
+    ],
+    topics: {
+      introduction: {
+        title: "O que foi a Idade Moderna?",
+        text: "A Idade Moderna foi um período de grandes transformações. Novas ideias sobre ciência, arte e sociedade circularam, enquanto as relações comerciais e políticas se modificaram."
+      },
+      context: {
+        title: "Contexto histórico",
+        text: "O crescimento do comércio, a formação de monarquias centralizadas e o desenvolvimento de novas técnicas de navegação contribuíram para mudanças na Europa e em outras regiões do mundo."
+      },
+      events: {
+        title: "Principais acontecimentos",
+        text: "Entre os acontecimentos estão o Renascimento, a Reforma Protestante, a expansão marítima europeia, a colonização de territórios e o desenvolvimento do absolutismo em diferentes monarquias."
+      },
+      characters: {
+        title: "Personagens e grupos importantes",
+        text: "Artistas, cientistas, navegadores, comerciantes, monarcas e povos indígenas participaram de processos históricos importantes. As experiências e consequências desses processos foram diferentes para cada sociedade."
+      },
+      consequences: {
+        title: "Consequências e legado",
+        text: "O período ampliou conexões comerciais entre continentes, transformou conhecimentos científicos e fortaleceu disputas por territórios e riquezas. A colonização provocou violência, exploração e profundas mudanças para povos originários."
+      },
+      curiosities: {
+        title: "Curiosidades",
+        text: "A imprensa de tipos móveis facilitou a reprodução de livros. Artistas renascentistas estudaram perspectiva e anatomia. As viagens oceânicas conectaram regiões antes pouco relacionadas pelo comércio europeu."
+      }
     },
-    {
-      componente: "Charrua com Aiveca de Ferro",
-      funcao: "Instrumento de tração animal pesada para revolver solos profundos e compactos do norte europeu.",
-      obrigacao: "Corveia",
-      explicacao: "Trabalho braçal gratuito obrigatório realizado nos campos exclusivos do senhor (Manso Senhorial) durante 3 a 4 dias na semana."
+    summary: [
+      "A Idade Moderna é tradicionalmente situada entre os séculos XV e XVIII.",
+      "O Renascimento valorizou as artes, os estudos e a investigação científica.",
+      "As navegações ampliaram conexões entre continentes.",
+      "A colonização provocou exploração e transformações profundas em diversos povos."
+    ],
+    comics: [
+      ["🎨", "O Renascimento", "Artistas e estudiosos ampliaram pesquisas sobre arte, natureza e conhecimento."],
+      ["⛵", "As navegações", "Embarcações cruzaram oceanos em busca de rotas comerciais e territórios."],
+      ["📚", "A imprensa", "A reprodução de livros favoreceu a circulação de informações."],
+      ["🌎", "A colonização", "A expansão colonial transformou sociedades e provocou exploração de povos."]
+    ],
+    gallery: [
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Mona%20Lisa.jpg?width=900",
+        "Mona Lisa",
+        "Obra de Leonardo da Vinci, um dos artistas mais conhecidos do Renascimento.",
+        "https://commons.wikimedia.org/wiki/File:Mona_Lisa.jpg"
+      ],
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/The%20School%20of%20Athens%20by%20Raphael.jpg?width=900",
+        "A Escola de Atenas",
+        "Afresco de Rafael que representa filósofos e estudiosos da Antiguidade, valorizando o conhecimento e a perspectiva artística.",
+        "https://commons.wikimedia.org/wiki/File:The_School_of_Athens_by_Raphael.jpg"
+      ],
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Portuguese%20Caravel.jpg?width=900",
+        "Caravela portuguesa",
+        "Modelo de embarcação associada às navegações oceânicas e à expansão marítima europeia.",
+        "https://commons.wikimedia.org/wiki/File:Portuguese_Caravel.jpg"
+      ]
+    ],
+    questions: [
+      {
+        question: "Qual movimento valorizou as artes e os estudos sobre o ser humano?",
+        options: ["Feudalismo", "Renascimento", "Guerra Fria", "Revolução Industrial"],
+        answer: 1,
+        explanation: "O Renascimento valorizou as artes, o conhecimento e diferentes investigações científicas."
+      },
+      {
+        question: "O que as navegações europeias ampliaram?",
+        options: ["O isolamento dos continentes", "O fim do comércio", "As conexões marítimas entre regiões", "A comunicação pela internet"],
+        answer: 2,
+        explanation: "As navegações ampliaram conexões marítimas e comerciais entre diferentes regiões."
+      },
+      {
+        question: "Qual invenção favoreceu a reprodução de livros na Europa?",
+        options: ["Imprensa de tipos móveis", "Telefone celular", "Rádio digital", "Motor elétrico"],
+        answer: 0,
+        explanation: "A imprensa de tipos móveis facilitou a reprodução de livros."
+      },
+      {
+        question: "Qual foi uma consequência da colonização europeia?",
+        options: ["Fim de todas as disputas", "Ausência de mudanças sociais", "Desaparecimento do comércio", "Exploração e transformação de povos e territórios"],
+        answer: 3,
+        explanation: "A colonização provocou exploração e profundas transformações em diferentes sociedades."
+      }
+    ]
+  },
+
+  "idade-contemporanea": {
+    title: "Idade Contemporânea",
+    symbol: "🌎",
+    description: "Compreenda as revoluções, a industrialização e o mundo atual.",
+    introduction: "A Idade Contemporânea começou convencionalmente em 1789, com a Revolução Francesa. É um período marcado por revoluções políticas, industrialização, conflitos mundiais, mudanças sociais e avanços tecnológicos.",
+    highlights: [
+      "🇫🇷 Revolução Francesa e mudanças políticas.",
+      "🏭 Industrialização e transformações no trabalho.",
+      "🌐 Guerras, direitos sociais e tecnologia."
+    ],
+    topics: {
+      introduction: {
+        title: "O que foi a Idade Contemporânea?",
+        text: "A Idade Contemporânea é o período histórico iniciado convencionalmente em 1789. Desde então, o mundo passou por profundas transformações políticas, econômicas, sociais e tecnológicas."
+      },
+      context: {
+        title: "Contexto histórico",
+        text: "No final do século XVIII, ideias iluministas questionavam privilégios e formas tradicionais de poder. Ao mesmo tempo, mudanças econômicas e sociais transformavam a Europa."
+      },
+      events: {
+        title: "Principais acontecimentos",
+        text: "Entre os acontecimentos estão a Revolução Francesa, a Revolução Industrial, as independências na América, as duas guerras mundiais, a Guerra Fria e a expansão da tecnologia digital."
+      },
+      characters: {
+        title: "Personagens e grupos importantes",
+        text: "Trabalhadores, movimentos sociais, lideranças políticas, mulheres, intelectuais e diferentes grupos da sociedade participaram das transformações contemporâneas."
+      },
+      consequences: {
+        title: "Consequências e legado",
+        text: "O período transformou as relações de trabalho, a organização dos Estados, os direitos políticos e sociais e as formas de comunicação. Também foi marcado por conflitos, desigualdades e disputas internacionais."
+      },
+      curiosities: {
+        title: "Curiosidades",
+        text: "A Revolução Industrial modificou a produção de mercadorias. A internet transformou a comunicação. Movimentos sociais tiveram papel importante na conquista de direitos."
+      }
     },
-    {
-      componente: "Cotas de Malha, Armaduras e Armamentos",
-      funcao: "Mecanismos de defesa e impacto cinético para a infantaria e cavalaria pesada senhorial.",
-      obrigacao: "Talha",
-      explicacao: "Entrega de parcela considerável (cerca de 30% a 50%) de tudo o que os servos produziam em seus lotes (Manso Servil)."
-    }
-  ],
-  tabelaObrigacoesGeral: [
-    {
-      obrigacao: "Corveia",
-      tipo: "Trabalho Compulsório",
-      descricao: "Trabalho gratuito dos servos durante 3 a 4 dias por semana nas terras exclusivas do senhor (Manso Senhorial), realizando aragem, plantio, colheita e manutenção de fortificações."
-    },
-    {
-      obrigacao: "Talha",
-      tipo: "Tributo em Produtos",
-      descricao: "Entrega obrigatória de parte da produção agropecuária obtida pelos servos em seus lotes individuais (Manso Servil)."
-    },
-    {
-      obrigacao: "Banalidades",
-      tipo: "Taxa de Uso Tecnológico",
-      descricao: "Pagamento compulsório pelo uso das estruturas e tecnologias de processamento do feudo pertencentes ao senhor, especialmente o moinho hidráulico, o forno e o lagar."
-    }
-  ]
+    summary: [
+      "A Idade Contemporânea começou convencionalmente em 1789.",
+      "A Revolução Francesa transformou ideias políticas e sociais.",
+      "A industrialização modificou a produção e o trabalho.",
+      "Guerras, movimentos sociais e tecnologias marcaram o período."
+    ],
+    comics: [
+      ["🇫🇷", "A Revolução Francesa", "A população questionou privilégios e estruturas políticas do Antigo Regime."],
+      ["🏭", "A industrialização", "Máquinas e fábricas transformaram a produção de mercadorias."],
+      ["🕊️", "Os conflitos mundiais", "Guerras transformaram fronteiras, sociedades e relações internacionais."],
+      ["💻", "A tecnologia digital", "Novas tecnologias modificaram a comunicação e o cotidiano."]
+    ],
+    gallery: [
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Prise%20de%20la%20Bastille.jpg?width=900",
+        "Queda da Bastilha",
+        "Representação histórica de um dos acontecimentos mais conhecidos da Revolução Francesa, iniciada em 1789.",
+        "https://commons.wikimedia.org/wiki/File:Prise_de_la_Bastille.jpg"
+      ],
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Industriutst%C3%A4llningen%201866%20Interior.jpg?width=900",
+        "Exposição industrial de 1866",
+        "Registro do interior de uma exposição industrial em Estocolmo, mostrando máquinas e transformações tecnológicas do século XIX.",
+        "https://commons.wikimedia.org/wiki/File:Industriutst%C3%A4llningen_1866_Interior.jpg"
+      ],
+      [
+        "https://commons.wikimedia.org/wiki/Special:FilePath/Apollo%2011%20first%20photo%20on%20Moon%20after%20landing%20%2848334532882%29.jpg?width=900",
+        "Missão Apollo 11",
+        "Fotografia da missão de 1969, quando seres humanos chegaram à Lua pela primeira vez.",
+        "https://commons.wikimedia.org/wiki/File:Apollo_11_first_photo_on_Moon_after_landing_(48334532882).jpg"
+      ]
+    ],
+    questions: [
+      {
+        question: "Qual acontecimento é tradicionalmente utilizado como marco inicial da Idade Contemporânea?",
+        options: ["Queda de Roma", "Revolução Francesa", "Invenção da escrita", "Guerra Fria"],
+        answer: 1,
+        explanation: "A Revolução Francesa, iniciada em 1789, é um marco convencional da Idade Contemporânea."
+      },
+      {
+        question: "Qual transformação marcou a Revolução Industrial?",
+        options: ["Fim da agricultura", "Invenção da escrita", "Uso crescente de máquinas e fábricas", "Criação da democracia ateniense"],
+        answer: 2,
+        explanation: "A industrialização ampliou o uso de máquinas e fábricas na produção."
+      },
+      {
+        question: "O que os movimentos sociais buscaram em diferentes momentos da Idade Contemporânea?",
+        options: ["Direitos e mudanças sociais", "Fim de toda participação política", "Retorno obrigatório ao feudalismo", "Proibição da educação"],
+        answer: 0,
+        explanation: "Diversos movimentos sociais lutaram por direitos e transformações na sociedade."
+      },
+      {
+        question: "Qual tecnologia transformou profundamente a comunicação contemporânea?",
+        options: ["Ábaco", "Papiro", "Máquina a vapor", "Internet"],
+        answer: 3,
+        explanation: "A internet transformou a comunicação e o acesso à informação."
+      }
+    ]
+  }
 };
 
-// ==========================================================================
-// SÍNTESE DE VOZ CALIBRADA (SpeechSynthesisUtterance: rate 0.9, pitch 1.0)
-// ==========================================================================
-let sintetizador = window.speechSynthesis;
-let locucao = null;
+/* ==========================================
+   NAVEGAÇÃO ENTRE AS 12 INTERFACES
+========================================== */
 
-function alternarLeituraTexto() {
-  if (!sintetizador) return;
+function goToScreen(number) {
+  const target = $(`#screen-${number}`);
+  if (!target) return;
 
-  if (estado.lendoAudio) {
-    sintetizador.cancel();
-    estado.lendoAudio = false;
-    document.getElementById('btnOuvirAula').textContent = 'Ouvir Aula';
+  $$(".screen").forEach(screen => screen.classList.remove("active"));
+  target.classList.add("active");
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+document.addEventListener("click", (event) => {
+  const navigationButton = event.target.closest("[data-go]");
+  if (!navigationButton) return;
+
+  const number = Number(navigationButton.dataset.go);
+  if (number === 7) renderLessonIntroduction();
+  if (number === 8) renderTopic(currentTopic);
+  if (number === 9) renderVisualLearning();
+  if (number === 10) renderSummary("summary");
+  if (number === 11) startQuiz();
+
+  goToScreen(number);
+});
+
+/* ==========================================
+   ACESSIBILIDADE: TAMANHO DO TEXTO
+========================================== */
+
+function applyFontScale() {
+  document.documentElement.style.setProperty("--font-scale", currentFontScale);
+  saveStorage(STORAGE_KEYS.font, currentFontScale);
+}
+
+$("#font-increase")?.addEventListener("click", () => {
+  currentFontScale = Math.min(1.4, currentFontScale + 0.1);
+  applyFontScale();
+});
+
+$("#font-decrease")?.addEventListener("click", () => {
+  currentFontScale = Math.max(0.8, currentFontScale - 0.1);
+  applyFontScale();
+});
+
+/* ==========================================
+   CADASTRO DO ESTUDANTE
+========================================== */
+
+$("#student-form")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  student = {
+    id: Date.now(),
+    name: $("#student-name").value.trim(),
+    age: $("#student-age").value,
+    gender: $("#student-gender").value,
+    grade: $("#student-grade").value,
+    school: $("#student-school").value.trim(),
+    schoolType: $("#student-school-type").value,
+    createdAt: new Date().toISOString(),
+    period: "",
+    score: null,
+    preferences: null
+  };
+
+  if (!student.name || !student.age || !student.gender ||
+      !student.grade || !student.school || !student.schoolType) {
+    alert("Preencha todos os campos para continuar.");
     return;
   }
 
-  const containerLicao = document.getElementById('areaRenderizacaoLicao');
-  if (!containerLicao) return;
+  saveStorage(STORAGE_KEYS.session, student);
 
-  const textoParaLer = containerLicao.innerText;
-
-  sintetizador.cancel();
-  locucao = new SpeechSynthesisUtterance(textoParaLer);
-  locucao.lang = 'pt-BR';
-  locucao.rate = 0.9;   // Ritmo pausado e relaxante
-  locucao.pitch = 1.0;  // Tom fixo e estável
-
-  locucao.onend = () => {
-    estado.lendoAudio = false;
-    document.getElementById('btnOuvirAula').textContent = 'Ouvir Aula';
-  };
-
-  locucao.onerror = () => {
-    estado.lendoAudio = false;
-    document.getElementById('btnOuvirAula').textContent = 'Ouvir Aula';
-  };
-
-  sintetizador.speak(locucao);
-  estado.lendoAudio = true;
-  document.getElementById('btnOuvirAula').textContent = 'Parar Áudio';
-}
-
-// ==========================================================================
-// PROCESSAMENTO LÉXICO (PLN) E ONBOARDING ESTRUTURADO
-// ==========================================================================
-function salvarPerfil(event) {
-  if (event && event.preventDefault) event.preventDefault();
-
-  const campoDificuldade = document.getElementById('campoDificuldade').value;
-  const campoEstilo = document.getElementById('campoEstilo').value;
-  const campoTutor = document.getElementById('campoTutor').value;
-  const inputHiperfoco = document.getElementById('textoHiperfoco');
-  const textoHiperfoco = inputHiperfoco ? inputHiperfoco.value.trim() : '';
-
-  estado.dificuldade = campoDificuldade;
-  estado.estilo = campoEstilo;
-  estado.tutorAtivo = campoTutor;
-  estado.termoHiperfoco = textoHiperfoco;
-
-  // Análise Léxica de Hiperfoco (PLN)
-  const termoLower = textoHiperfoco.toLowerCase();
-  const termosChaveMecanica = [
-    'mecanica', 'mecânica', 'engrenag', 'engrenagem', 'engrenagens',
-    'robot', 'robótica', 'robotica', 'robô', 'robo',
-    'motor', 'motores', 'maquina', 'máquina', 'maquinas', 'máquinas',
-    'tecnologia', 'mecanismo', 'mecanismos'
-  ];
-
-  estado.hiperfocoDetectado = termosChaveMecanica.some(chave => termoLower.includes(chave));
-
-  // Atualização das Tags no Profile Summary
-  document.getElementById('tagDificuldade').textContent = `Dificuldade: ${estado.dificuldade}`;
-  document.getElementById('tagEstilo').textContent = `Estilo: ${obterNomeEstilo(estado.estilo)}`;
-  document.getElementById('tagTutor').textContent = `Tutor: ${estado.tutorAtivo === 'Sim' ? 'Ativado' : 'Autônomo'}`;
-
-  const tagHiperfocoEl = document.getElementById('tagHiperfoco');
-  const textoHiperfocoTag = document.getElementById('textoHiperfocoTag');
-
-  if (estado.hiperfocoDetectado) {
-    tagHiperfocoEl.style.display = 'inline-block';
-    textoHiperfocoTag.textContent = textoHiperfoco.toUpperCase();
-  } else if (textoHiperfoco.length > 0) {
-    tagHiperfocoEl.style.display = 'inline-block';
-    textoHiperfocoTag.textContent = `"${textoHiperfoco}"`;
-  } else {
-    tagHiperfocoEl.style.display = 'none';
-  }
-
-  // Controle de Visibilidade do Painel do Tutor
-  const secaoTutor = document.getElementById('secaoPainelTutor');
-  if (secaoTutor) {
-    secaoTutor.style.display = (estado.tutorAtivo === 'Sim') ? 'block' : 'none';
-  }
-
-  // Transição de Telas
-  document.getElementById('telaOnboarding').style.display = 'none';
-  document.getElementById('barraProfile').style.display = 'flex';
-  document.getElementById('telaAula').style.display = 'flex';
-
-  atualizarBotoesModo();
-  renderizarLicao();
-}
-
-function entrarDiretoNaAula() {
-  const inputHiperfoco = document.getElementById('textoHiperfoco');
-  if (inputHiperfoco) inputHiperfoco.value = 'mecânica e engrenagens';
-  salvarPerfil({ preventDefault: () => {} });
-}
-
-function redefinirPerfil() {
-  if (sintetizador) sintetizador.cancel();
-  estado.lendoAudio = false;
-  document.getElementById('btnOuvirAula').textContent = 'Ouvir Aula';
-
-  // Reseta o formulário
-  const form = document.getElementById('formOnboarding');
-  if (form) form.reset();
-
-  document.getElementById('telaAula').style.display = 'none';
-  document.getElementById('barraProfile').style.display = 'none';
-  document.getElementById('telaOnboarding').style.display = 'flex';
-}
-
-function obterNomeEstilo(estilo) {
-  switch (estilo) {
-    case 'quadrinhos': return 'Quadrinhos / Infográfico';
-    case 'texto': return 'Texto Analítico';
-    case 'mapa': return 'Mapa Mental';
-    case 'audio': return 'Modo Áudio';
-    default: return estilo;
-  }
-}
-
-function trocarModo(novoModo) {
-  estado.estilo = novoModo;
-  document.getElementById('tagEstilo').textContent = `Estilo: ${obterNomeEstilo(novoModo)}`;
-  atualizarBotoesModo();
-  renderizarLicao();
-}
-
-function atualizarBotoesModo() {
-  const modos = ['texto', 'quadrinhos', 'mapa', 'audio'];
-  modos.forEach(m => {
-    const btn = document.getElementById(`btnModo${m.charAt(0).toUpperCase() + m.slice(1)}`);
-    if (btn) {
-      if (estado.estilo === m) {
-        btn.classList.add('ativo');
-      } else {
-        btn.classList.remove('ativo');
-      }
+  try {
+    const dbUser = await ensureSupabaseStudent();
+    if (dbUser) {
+      student.databaseId = dbUser.id;
+      await dbSaveStudent(student);
+      saveStorage(STORAGE_KEYS.session, student);
     }
+  } catch (error) {
+    console.error("Falha ao registrar sessão no banco:", error);
+  }
+
+  const accesses = readStorage(STORAGE_KEYS.accesses, 0);
+  saveStorage(STORAGE_KEYS.accesses, accesses + 1);
+
+  goToScreen(4);
+});
+
+/* ==========================================
+   PREFERÊNCIAS DE APRENDIZAGEM
+========================================== */
+
+$("#preferences-form")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!student) {
+    alert("Preencha primeiro seu cadastro.");
+    goToScreen(3);
+    return;
+  }
+
+  const learningStyle = $$('input[name="learningStyle"]:checked')
+    .map(input => input.value);
+
+  const helpStyle = $$('input[name="helpStyle"]:checked')
+    .map(input => input.value);
+
+  if (helpStyle.length > 2) {
+    alert("Escolha no máximo duas opções na pergunta 3.");
+    return;
+  }
+
+  preferences = {
+    learningStyle,
+    textLevel: $("#text-level").value,
+    helpStyle,
+    studyMode: $("#study-mode").value
+  };
+
+  student.preferences = preferences;
+  saveStorage(STORAGE_KEYS.session, student);
+
+  try { await dbSavePreferences(preferences); }
+  catch (error) { console.error("Falha ao salvar preferências:", error); }
+
+  goToScreen(5);
+});
+
+/* ==========================================
+   ESCOLHA DO PERÍODO
+========================================== */
+
+$$(".period-card").forEach(card => {
+  card.addEventListener("click", () => {
+    const period = card.dataset.period;
+
+    if (!periodData[period]) return;
+
+    selectedPeriod = period;
+    student.period = period;
+    saveStorage(STORAGE_KEYS.session, student);
+
+    renderPersonalization();
+    goToScreen(6);
   });
-}
+});
 
-// ==========================================================================
-// RENDERIZAÇÃO DIDÁTICA EXPANDIDA E ADAPTATIVA (DUA)
-// ==========================================================================
-function renderizarLicao() {
-  const container = document.getElementById('areaRenderizacaoLicao');
-  let conteudoHTML = '';
+/* ==========================================
+   PERSONALIZAÇÃO
+========================================== */
 
-  const tituloExibido = estado.hiperfocoDetectado 
-    ? conteudoLicao.hiperfocoMecanico.titulo 
-    : conteudoLicao.geral.titulo;
+function renderPersonalization() {
+  if (!student || !preferences || !selectedPeriod) return;
 
-  const resumoExibido = estado.hiperfocoDetectado
-    ? conteudoLicao.hiperfocoMecanico.resumo
-    : conteudoLicao.geral.introducao;
+  const period = periodData[selectedPeriod];
 
-  // 1. MÍDIA: QUADRINHOS / INFOGRÁFICO TÉCNICO (3 QUADROS MADUROS)
-  if (estado.estilo === 'quadrinhos') {
-    conteudoHTML = `
-      <section class="secao-didatica">
-        <h2>${tituloExibido}</h2>
-        <p>${resumoExibido}</p>
-      </section>
+  $("#personalization-title").textContent =
+    `Sua aula: ${period.title}`;
 
-      <div class="grade-gibi-maduro">
-        
-        <!-- QUADRO 1: ESTRUTURA GEOGRÁFICA DOS MANSOS FEUDAIS -->
-        <article class="quadro-gibi">
-          <div class="caixa-narra-azul">Quadro 1: Estrutura Geográfica dos Mansos Feudais</div>
-          <div class="esquema-bloco-diagrama">
-            <div class="titulo-diagrama">TOPOGRAFIA E ORGANIZAÇÃO ESPACIAL DO FEUDO</div>
-            <p><strong>[ Manso Senhorial (Reserva Senhorial) ]</strong> Terras exclusivas exploradas diretamente pelo senhor feudal, contendo o castelo fortificado, moinhos hidráulicos, fornos, celeiros e as melhores parcelas aráveis.</p>
-            <p><strong>[ Manso Servil (Tenências Camponesas) ]</strong> Parcelas de terra divididas em faixas (lotes) concedidas aos servos para produção de sua subsistência familiar, sujeitas ao pagamento perpétuo de tributos.</p>
-            <p><strong>[ Manso Comunal (Terras Coletivas) ]</strong> Bosques, florestas, pastagens e rios de utilização comum regulamentada pelo senhor, onde os camponeses realizavam coleta de lenha e pastoreio mediante tributação.</p>
-          </div>
-          <div class="balao-fala-maduro">
-            <strong>Engenheiro Historiográfico:</strong> "A divisão topográfica do feudo operava com circuitos fechados de produção. A energia gerada pelo trabalho servil no Manso Senhorial alimentava a sustentabilidade material de toda a estrutura fortificada."
-          </div>
-        </article>
+  $("#personalization-summary").innerHTML = `
+    <h3>Olá, ${escapeHTML(student.name)}!</h3>
+    <p>Você escolheu estudar <strong>${escapeHTML(period.title)}</strong>.</p>
+    <p>Vamos organizar o conteúdo de acordo com suas preferências.</p>
+  `;
 
-        <!-- QUADRO 2: TABELA TÉCNICA DE COMPONENTES, FUNÇÃO MECÂNICA E OBRIGAÇÕES SERVIS -->
-        <article class="quadro-gibi">
-          <div class="caixa-narra-azul">Quadro 2: Componentes Mecânicos, Função Operacional e Obrigações Servis</div>
-          <p>Abaixo, a correlação técnica entre os aparatos materiais do feudo e o sistema compulsório de tributação senhorial:</p>
-          <div class="tabela-texturizada-container">
-            <table class="tabela-texturizada" aria-label="Tabela Técnica das Obrigações e Mecânica Feudal">
-              <thead>
-                <tr>
-                  <th>Componente Estrutural / Técnico</th>
-                  <th>Função Mecânica e Produtiva</th>
-                  <th>Obrigação Servil Associada</th>
-                  <th>Fundamento Jurídico e Tributário</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${conteudoLicao.tabelaMecanicaObrigacoes.map(item => `
-                  <tr>
-                    <td><strong>${item.componente}</strong></td>
-                    <td>${item.funcao}</td>
-                    <td><span style="color: #38BDF8; font-weight: 700;">${item.obrigacao}</span></td>
-                    <td>${item.explicacao}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-          <div class="balao-fala-maduro">
-            <strong>Observador Analítico:</strong> "O monopólio das forças mecânicas (moinho e forno) garantia que o senhor feudal controlasse tanto a transformação dos alimentos quanto a extração compulsória de excedentes dos servos."
-          </div>
-        </article>
+  const learningNames = {
+    text: "Textos",
+    images: "Imagens",
+    comics: "Quadrinhos",
+    audio: "Áudio",
+    video: "Vídeos"
+  };
 
-        <!-- QUADRO 3: AS TRÊS ORDENS ESTAMENTAIS COMO ENGRENAGENS ACOPLADAS -->
-        <article class="quadro-gibi">
-          <div class="caixa-narra-azul">Quadro 3: As Três Ordens Estamentais como Engrenagens Acopladas</div>
-          <div class="esquema-bloco-diagrama">
-            <div class="titulo-diagrama">SISTEMA MECÂNICO SOCIAL (TEORIA TRIPARTITE MEDIEVAL)</div>
-            <p>⚙️ <strong>Engrenagem Guia - Oratores (Clero):</strong> Engrenagem condutora que fornece a justificativa teológica, as leis divinas e a legitimação moral da ordem estamental.</p>
-            <p>⚙️ <strong>Engrenagem de Força e Retenção - Bellatores (Nobreza):</strong> Engrenagem armada que impõe a coerção física militar, administra a justiça territorial e detém a posse das terras.</p>
-            <p>⚙️ <strong>Engrenagem Motriz de Base - Laboratores (Servos):</strong> Grande engrenagem de tração contínua que fornece a energia cinética do trabalho agrícola e sustenta materialmente as engrenagens superiores.</p>
-          </div>
-          <div class="balao-fala-maduro">
-            <strong>Analista Social:</strong> "Se qualquer um dos dentes dessa engrenagem social rompesse sua função determinada, a estabilidade de todo o maquinário feudal entraria em colapso."
-          </div>
-        </article>
+  const helpNames = {
+    simpler: "Linguagem simples",
+    examples: "Exemplos",
+    images: "Imagens",
+    repeat: "Repetição das explicações"
+  };
 
-      </div>
-    `;
-  } 
-  
-  // 2. MÍDIA: TEXTO CORRIDO ANALÍTICO
-  else if (estado.estilo === 'texto') {
-    conteudoHTML = `
-      <section class="secao-didatica">
-        <h2>${tituloExibido}</h2>
-        <p>${resumoExibido}</p>
-      </section>
+  const studyNames = {
+    alone: "Estudar sozinho(a)",
+    accompanied: "Estudar acompanhado(a)",
+    both: "Estudar das duas maneiras"
+  };
 
-      <section class="secao-didatica">
-        <h3>1. A Fragmentação do Poder Central e o Pacto Feudo-Vassálico</h3>
-        <p>${conteudoLicao.geral.politica}</p>
-        <p>A concessão do benefício feudal não implicava em propriedade privada no sentido capitalista moderno, mas sim em um usufruto hereditário condicionado ao cumprimento estrito dos deveres de fidelidade e auxílio militar mútuo.</p>
-      </section>
+  const levelNames = {
+    short: "Explicações curtas",
+    medium: "Explicações intermediárias",
+    detailed: "Explicações detalhadas"
+  };
 
-      <section class="secao-didatica">
-        <h3>2. O Regime Senhorial e as Relações de Produção Servil</h3>
-        <p>A terra constituía o eixo fundamental de riqueza e prestígio social. A estrutura fundiária encontrava-se dividida entre o Manso Senhorial, o Manso Servil e as Terras Comunais. A submissão jurídica dos camponeses vinculava-os à gleba e impunha pesadas obrigações tributárias:</p>
-        
-        <div class="tabela-texturizada-container">
-          <table class="tabela-texturizada">
-            <thead>
-              <tr>
-                <th>Obrigação</th>
-                <th>Modalidade</th>
-                <th>Definição Jurídica e Historiográfica</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${conteudoLicao.tabelaObrigacoesGeral.map(item => `
-                <tr>
-                  <td><strong>${item.obrigacao}</strong></td>
-                  <td>${item.tipo}</td>
-                  <td>${item.descricao}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="secao-didatica">
-        <h3>3. A Ideologia Tripartite e a Imobilidade Social</h3>
-        <p>${conteudoLicao.geral.sociedade}</p>
-        <p>A hierarquia era concebida como um reflexo terreno da ordem celestial, estabelecendo que a alteração de posição social contrariava a vontade divina, o que restringia drasticamente a mobilidade vertical ao longo de toda a Idade Média Central.</p>
-      </section>
-    `;
-  }
-
-  // 3. MÍDIA: MAPA MENTAL E RELAÇÕES ESTRUTURAIS
-  else if (estado.estilo === 'mapa') {
-    conteudoHTML = `
-      <section class="secao-didatica">
-        <h2>${tituloExibido}</h2>
-        <p>${resumoExibido}</p>
-      </section>
-
-      <div class="mapa-container-blocos">
-        <div class="card-bloco-mapa">
-          <h4>POLÍTICA & INSTITUIÇÕES</h4>
-          <ul>
-            <li>Descentralização do poder régio</li>
-            <li>Relações de Suserania e Vassalagem</li>
-            <li>Cerimônia de Homenagem e Investidura</li>
-            <li>Privatização do monopólio da justiça</li>
-          </ul>
-        </div>
-
-        <div class="card-bloco-mapa">
-          <h4>DIVISÃO DO ESPAÇO FEUDAL</h4>
-          <ul>
-            <li><strong>Manso Senhorial:</strong> Terras exclusivas do nobre</li>
-            <li><strong>Manso Servil:</strong> Faixas de produção de subsistência</li>
-            <li><strong>Manso Comunal:</strong> Florestas e pastos coletivos regulados</li>
-          </ul>
-        </div>
-
-        <div class="card-bloco-mapa">
-          <h4>TRIBUTAÇÃO E SERVIDÃO</h4>
-          <ul>
-            <li><strong>Corveia:</strong> Dias compulsórios de trabalho servil</li>
-            <li><strong>Talha:</strong> Parcela da colheita do manso servil</li>
-            <li><strong>Banalidades:</strong> Taxa de uso do moinho e forno</li>
-          </ul>
-        </div>
-
-        <div class="card-bloco-mapa">
-          <h4>ESTAMENTOS SOCIAIS</h4>
-          <ul>
-            <li><strong>Oratores (Clero):</strong> Função teológica e doutrinária</li>
-            <li><strong>Bellatores (Nobreza):</strong> Defesa bélica e posse territorial</li>
-            <li><strong>Laboratores (Servos):</strong> Sustentáculo produtivo material</li>
-          </ul>
-        </div>
-      </div>
-    `;
-  }
-
-  // 4. MÍDIA: ÁUDIO ORIENTADO
-  else {
-    conteudoHTML = `
-      <section class="secao-didatica">
-        <h2>${tituloExibido} (Modo Áudio Estruturado)</h2>
-        <p>O módulo de áudio reproduz o texto analítico com taxa de fala pausada (0.9x) e frequência estável (1.0) para garantir máxima clareza auditiva.</p>
-        
-        <div class="bloco-destaque-hiperfoco">
-          <h3>Síntese para Audição:</h3>
-          <p>${resumoExibido}</p>
-          <p>O feudalismo organizou-se em torno da posse da terra e da servidão. O senhor feudal exercia monopólio sobre os aparatos de transformação agrícola, como os moinhos hidráulicos, cobrando o tributo das Banalidades. A sociedade estamental era concebida em três ordens funcionais: clero, nobreza e servos.</p>
-        </div>
-      </section>
-    `;
-  }
-
-  // Exercício de Fixação Interativo
-  conteudoHTML += gerarQuizHTML();
-  container.innerHTML = conteudoHTML;
-}
-
-// ==========================================================================
-// EXERCÍCIO DE FIXAÇÃO INTERATIVO (QUESTÃO 1: MOINHO HIDRÁULICO E BANALIDADES)
-// ==========================================================================
-function gerarQuizHTML() {
-  return `
-    <section class="container-quiz" aria-labelledby="tituloQuiz">
-      <div class="cabecalho-quiz">
-        <h3 id="tituloQuiz">Exercício de Fixação e Avaliação Formativa</h3>
-        <p class="enunciado-quiz">
-          <strong>Questão 1:</strong> No sistema feudal da Europa Ocidental, a difusão dos <strong>moinhos hidráulicos</strong> representou um significativo avanço mecânico para o processamento de cereais. No entanto, essas instalações pertenciam com exclusividade ao senhor feudal. 
-          Qual era o nome da obrigação servil compulsória cobrada aos camponeses pelo uso obrigatório do moinho, forno e lagar senhoriais?
-        </p>
-      </div>
-
-      <div class="lista-alternativas" id="grupoAlternativas">
-        <button class="btn-alternativa" onclick="verificarResposta('A', this)">
-          A) <strong>Corveia</strong> — Trabalho manual não remunerado realizado nas terras diretas do castelo durante dias fixos da semana.
-        </button>
-        <button class="btn-alternativa" onclick="verificarResposta('B', this)">
-          B) <strong>Banalidades</strong> — Taxa compulsória cobrada em produtos pelo uso exclusivo das ferramentas e estruturas tecnológicas do feudo.
-        </button>
-        <button class="btn-alternativa" onclick="verificarResposta('C', this)">
-          C) <strong>Talha</strong> — Entrega percentual compulsória da produção obtida nos lotes servis individuais (tenências).
-        </button>
-        <button class="btn-alternativa" onclick="verificarResposta('D', this)">
-          D) <strong>Mão-morta</strong> — Tributo pago pelos herdeiros camponeses para assegurar a continuidade da posse da terra após a morte do chefe da família.
-        </button>
-      </div>
-
-      <div id="caixaFeedbackQuiz" class="caixa-feedback" style="display: none;" role="status"></div>
-    </section>
+  $("#personalization-details").innerHTML = `
+    <div class="personalization-details">
+      <p><strong>📚 Recursos:</strong> ${
+        preferences.learningStyle.length
+          ? preferences.learningStyle.map(item => learningNames[item]).join(", ")
+          : "Nenhum recurso específico selecionado"
+      }</p>
+      <p><strong>📝 Explicações:</strong> ${levelNames[preferences.textLevel]}</p>
+      <p><strong>💡 Apoio:</strong> ${
+        preferences.helpStyle.length
+          ? preferences.helpStyle.map(item => helpNames[item]).join(", ")
+          : "Sem preferência adicional"
+      }</p>
+      <p><strong>🤝 Forma de estudo:</strong> ${studyNames[preferences.studyMode]}</p>
+    </div>
   `;
 }
 
-function verificarResposta(opcaoEscolhida, botaoClicado) {
-  const botoes = document.querySelectorAll('.btn-alternativa');
-  const caixaFeedback = document.getElementById('caixaFeedbackQuiz');
+/* ==========================================
+   INTRODUÇÃO DA AULA
+========================================== */
 
-  botoes.forEach(btn => btn.disabled = true);
+function renderLessonIntroduction() {
+  const period = periodData[selectedPeriod];
+  if (!period) return;
 
-  if (opcaoEscolhida === 'B') {
-    botaoClicado.classList.add('correta');
-    caixaFeedback.className = 'caixa-feedback sucesso';
-    caixaFeedback.innerHTML = `
-      <strong>Resposta Correta (Alternativa B: Banalidades)</strong><br>
-      Precisão historiográfica confirmada! As <strong>Banalidades</strong> correspondiam às taxas de uso dos equipamentos que integravam o monopólio técnico senhorial (moinho hidráulico, forno e lagar). Os servos eram proibidos de erguer seus próprios mecanismos de moagem, sendo obrigados a destinar parcela de seus grãos moídos ao senhor feudal.
-    `;
+  $("#lesson-symbol").textContent = period.symbol;
+  $("#lesson-title").textContent = period.title;
+  $("#lesson-description").textContent = period.description;
+  $("#content-period-title").textContent = `Vamos conhecer ${period.title}?`;
+  $("#lesson-intro-text").textContent = adaptText(period.introduction);
+
+  $("#lesson-highlights").innerHTML = period.highlights
+    .map(item => `<div>${escapeHTML(item)}</div>`)
+    .join("");
+}
+
+/* ==========================================
+   ADAPTAÇÃO DO TEXTO
+========================================== */
+
+function adaptText(text) {
+  if (!preferences) return text;
+
+  if (preferences.textLevel === "short") {
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    return sentences.slice(0, 2).join(" ");
+  }
+
+  if (preferences.textLevel === "medium") {
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    return sentences.slice(0, 3).join(" ");
+  }
+
+  return text;
+}
+
+/* ==========================================
+   ABAS E CONTEÚDO DA AULA
+========================================== */
+
+function renderTopic(topic) {
+  const period = periodData[selectedPeriod];
+  if (!period || !period.topics[topic]) return;
+
+  currentTopic = topic;
+
+  $$(".lesson-tab").forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.topic === topic);
+  });
+
+  const content = period.topics[topic];
+  if (student?.databaseId) dbSaveProgress(selectedPeriod, topic).catch(error => console.error("Falha ao salvar progresso:", error));
+
+  $("#content-title").textContent = period.title;
+  $("#lesson-content").innerHTML = `
+    <h2>${escapeHTML(content.title)}</h2>
+    <p>${escapeHTML(adaptText(content.text))}</p>
+  `;
+}
+
+$$(".lesson-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    renderTopic(tab.dataset.topic);
+  });
+});
+
+/* ==========================================
+   LEITURA EM ÁUDIO
+========================================== */
+
+$("#speak-content")?.addEventListener("click", () => {
+  if (!("speechSynthesis" in window)) {
+    alert("Seu navegador não oferece leitura em áudio.");
+    return;
+  }
+
+  const text = $("#lesson-content")?.innerText;
+  if (!text) return;
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "pt-BR";
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+
+  window.speechSynthesis.speak(utterance);
+});
+
+$("#stop-audio")?.addEventListener("click", () => {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+});
+
+/* ==========================================
+   QUADRINHOS E GALERIA HISTÓRICA REAL
+========================================== */
+
+function renderVisualLearning() {
+  const period = periodData[selectedPeriod];
+  if (!period) return;
+
+  /* QUADRINHOS */
+
+  $("#comic-title").textContent =
+    `Uma história em cenas: ${period.title}`;
+
+  $("#comic-panels").innerHTML = period.comics.map((comic, index) => `
+    <article class="comic-panel">
+      <div class="comic-illustration">
+        ${escapeHTML(comic[0])}
+      </div>
+
+      <div class="comic-panel-content">
+        <h3>Cena ${index + 1}: ${escapeHTML(comic[1])}</h3>
+        <p>${escapeHTML(comic[2])}</p>
+      </div>
+    </article>
+  `).join("");
+
+  /* GALERIA COM FOTOGRAFIAS E IMAGENS REAIS */
+
+  $("#history-gallery").innerHTML = `
+    <div class="gallery-heading">
+      <h2>Galeria histórica</h2>
+      <p>
+        Conheça imagens reais relacionadas a
+        ${escapeHTML(period.title)}.
+      </p>
+    </div>
+
+    <div class="history-gallery-grid">
+
+      ${period.gallery.map(item => `
+        <article class="gallery-card">
+
+          <img
+            class="gallery-photo"
+            src="${escapeHTML(item[0])}"
+            alt="${escapeHTML(item[1])}"
+            loading="lazy"
+            style="width:100%;height:200px;object-fit:cover;display:block;"
+            onerror="this.alt='Imagem indisponível';this.style.display='none';"
+          >
+
+          <div class="gallery-card-content">
+
+            <h3>${escapeHTML(item[1])}</h3>
+
+            <p>${escapeHTML(item[2])}</p>
+
+            <a
+              href="${escapeHTML(item[3])}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Consultar origem da imagem ↗
+            </a>
+
+          </div>
+        </article>
+      `).join("")}
+
+    </div>
+  `;
+}
+
+/* ==========================================
+   RESUMO E MAPA MENTAL
+========================================== */
+
+function renderSummary(model) {
+  const period = periodData[selectedPeriod];
+  if (!period) return;
+
+  if (model === "summary") {
+    $("#summary-title").textContent = `Resumo: ${period.title}`;
+
+    $("#summary-content").innerHTML = period.summary.map((item, index) => `
+      <div class="summary-section">
+        <p><strong>${index + 1}.</strong> ${escapeHTML(item)}</p>
+      </div>
+    `).join("");
+
+    $("#mind-map-title").innerHTML = "";
+    $("#mind-map").innerHTML = "";
   } else {
-    botaoClicado.classList.add('incorreta');
-    
-    // Destaca a alternativa B (índice 1)
-    if (botoes[1]) botoes[1].classList.add('correta');
+    $("#summary-title").textContent = `Mapa mental: ${period.title}`;
+    $("#summary-content").innerHTML = "";
 
-    caixaFeedback.className = 'caixa-feedback alerta';
-    caixaFeedback.innerHTML = `
-      <strong>Gabarito Comentado: A alternativa correta é a (B) — Banalidades.</strong><br>
-      A taxa associada à utilização dos equipamentos mecânicos e benfeitorias senhoriais (como o moinho hidráulico e o forno coletivo) denominava-se <strong>Banalidade</strong>. A Corveia referia-se a dias de trabalho, a Talha à divisão da colheita servil, e a Mão-morta à sucessão familiar da posse da terra.
+    $("#mind-map-title").innerHTML = "<h3>Organização das ideias principais</h3>";
+
+    $("#mind-map").innerHTML = `
+      <div class="mind-map">
+        <div class="radial-map">
+          <div class="mind-node central">${escapeHTML(period.title)}</div>
+          <div class="mind-branches">
+            ${period.summary.map(item => `
+              <div class="mind-node">${escapeHTML(item)}</div>
+            `).join("")}
+          </div>
+        </div>
+      </div>
     `;
   }
-
-  caixaFeedback.style.display = 'block';
 }
 
-// ==========================================================================
-// MODO DE FOCO E AJUSTES DE ACESSIBILIDADE
-// ==========================================================================
-function alternarModoFoco() {
-  estado.modoFoco = !estado.modoFoco;
-  if (estado.modoFoco) {
-    document.body.classList.add('modo-foco-ativo');
-    document.getElementById('btnSairModoFoco').style.display = 'block';
-  } else {
-    document.body.classList.remove('modo-foco-ativo');
-    document.getElementById('btnSairModoFoco').style.display = 'none';
+$$("[data-summary-model]").forEach(button => {
+  button.addEventListener("click", () => {
+    renderSummary(button.dataset.summaryModel);
+  });
+});
+
+/* ==========================================
+   QUIZ
+========================================== */
+
+function shuffleArray(array) {
+  const copy = [...array];
+
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
+
+  return copy;
 }
 
-function alterarFonte(variacao) {
-  if (variacao > 0 && estado.tamanhoFonte < 26) {
-    estado.tamanhoFonte += variacao;
-  } else if (variacao < 0 && estado.tamanhoFonte > 15) {
-    estado.tamanhoFonte += variacao;
-  }
-  document.documentElement.style.setProperty('--tamanho-base', `${estado.tamanhoFonte}px`);
+function startQuiz() {
+  const period = periodData[selectedPeriod];
+  if (!period) return;
+
+  quizQuestions = period.questions.map(question => {
+    const options = question.options.map((text, index) => ({
+      text,
+      correct: index === question.answer
+    }));
+
+    return {
+      question: question.question,
+      options: shuffleArray(options),
+      explanation: question.explanation
+    };
+  });
+
+  currentQuestion = 0;
+  score = 0;
+  answered = false;
+
+  renderQuestion();
 }
+
+function renderQuestion() {
+  const question = quizQuestions[currentQuestion];
+  if (!question) return;
+
+  answered = false;
+
+  $("#question-counter").textContent =
+    `Questão ${currentQuestion + 1} de ${quizQuestions.length}`;
+
+  const progress = (currentQuestion / quizQuestions.length) * 100;
+
+  $("#quiz-progress-label").textContent = `${Math.round(progress)}%`;
+  $("#quiz-progress-fill").style.width = `${progress}%`;
+
+  $("#quiz-question").textContent = question.question;
+  $("#quiz-feedback").textContent = "";
+  $("#quiz-feedback").className = "quiz-feedback";
+
+  $("#quiz-next").disabled = true;
+
+  $("#quiz-next").textContent =
+    currentQuestion === quizQuestions.length - 1
+      ? "Ver resultado →"
+      : "Próxima questão →";
+
+  $("#quiz-options").innerHTML = question.options.map((option, index) => `
+    <button
+      type="button"
+      class="quiz-option"
+      data-option="${index}"
+    >
+      ${String.fromCharCode(65 + index)}. ${escapeHTML(option.text)}
+    </button>
+  `).join("");
+
+  $$(".quiz-option").forEach(button => {
+    button.addEventListener("click", () => {
+      selectAnswer(Number(button.dataset.option));

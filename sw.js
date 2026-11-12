@@ -1,57 +1,37 @@
-const CACHE_NAME = "eduia-inclusiva-v2";
+const CACHE_NAME = "eduia-inclusiva-supabase-v1";
+const APP_FILES = ["./", "./index.html", "./style.css", "./script.js", "./supabase-client.js", "./manifest.json"];
 
-const FILES_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./script.js",
-  "./manifest.json"
-];
-
-self.addEventListener("install", (event) => {
+self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(FILES_TO_CACHE);
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(APP_FILES))
+      .then(() => self.skipWaiting())
   );
-
-  self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(key => key.startsWith("eduia-inclusiva-") && key !== CACHE_NAME).map(key => caches.delete(key))))
+      .then(() => self.clients.claim())
   );
-
-  self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(response => {
         if (response && response.ok) {
           const copy = response.clone();
-
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, copy);
-          });
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         }
-
         return response;
-      })
-      .catch(() => {
-        return caches.match(event.request).then((cached) => {
-          return cached || caches.match("./index.html");
-        });
-      })
+      }).catch(() => caches.match("./index.html"));
+    })
   );
 });

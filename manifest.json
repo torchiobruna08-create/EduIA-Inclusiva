@@ -1,7 +1,7 @@
 {
   "name": "EduIA Inclusiva",
   "short_name": "EduIA",
-  "description": "Plataforma educacional inclusiva e adaptativa.",
+  "description": "Aprendizagem adaptativa e acessível de História.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

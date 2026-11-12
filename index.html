@@ -1,151 +1,656 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Plataforma Adaptativa DUA - História: Feudalismo</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <meta name="theme-color" content="#071522">
+  <meta name="description" content="EduIA Inclusiva: aprendizagem adaptativa e acessível.">
 
-  <!-- =========================================================================
-       BARRA SUPERIOR DE ACESSIBILIDADE E TOPO
-       ========================================================================= -->
-  <header id="topoSite" class="topo-site">
-    <div class="logo-area">
-      <div class="logo-icone" aria-hidden="true">🏛️</div>
+  <title>EduIA Inclusiva</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+<div class="app-shell">
+
+  <!-- CABEÇALHO -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">🧠</div>
       <div>
-        <h1>História Medieval: O Feudalismo Europeu</h1>
-        <p class="subtitulo-topo">Plataforma Adaptativa DUA — Ensino Médio</p>
+        <span class="brand-name">EduIA Inclusiva</span>
+        <span class="brand-subtitle">Aprender de diferentes maneiras</span>
       </div>
     </div>
-    
-    <div class="controles-acessibilidade">
-      <button id="btnModoFoco" class="btn-acessivel" onclick="alternarModoFoco()" aria-label="Ativar ou desativar Modo de Foco">
-        Modo de Foco
+
+    <div class="topbar-actions">
+      <div class="accessibility-controls">
+        <button type="button" id="font-decrease" aria-label="Diminuir texto">A−</button>
+        <button type="button" id="font-increase" aria-label="Aumentar texto">A+</button>
+      </div>
+
+      <button type="button" class="creator-open-button" id="creator-open">
+        🔐 Área da criadora
       </button>
-      <button id="btnOuvirAula" class="btn-acessivel" onclick="alternarLeituraTexto()" aria-label="Ouvir conteúdo da aula com voz pausada">
-        Ouvir Aula
-      </button>
-      <button id="btnAumentarFonte" class="btn-acessivel" onclick="alterarFonte(2)" aria-label="Aumentar tamanho do texto">A+</button>
-      <button id="btnDiminuirFonte" class="btn-acessivel" onclick="alterarFonte(-2)" aria-label="Diminuir tamanho do texto">A-</button>
     </div>
   </header>
 
-  <!-- =========================================================================
-       BARRA DE PROFILE DINÂMICA (PROFILE SUMMARY)
-       ========================================================================= -->
-  <section id="barraProfile" class="barra-profile" style="display: none;" aria-label="Resumo do perfil pedagógico">
-    <div class="tags-container">
-      <span class="tag-meta" id="tagDificuldade">Dificuldade: --</span>
-      <span class="tag-meta" id="tagEstilo">Estilo: --</span>
-      <span class="tag-meta" id="tagTutor">Tutor: --</span>
-      <span class="tag-destaque-hiperfoco" id="tagHiperfoco" style="display: none;" role="status">
-        Hiperfoco Detectado: <strong id="textoHiperfocoTag"></strong> (Conteúdo Adaptado)
-      </span>
-    </div>
-    <button class="btn-reconfigurar" onclick="redefinirPerfil()" aria-label="Redefinir Perfil">⚙️ Redefinir Perfil</button>
-  </section>
+  <main class="main-content">
 
-  <!-- =========================================================================
-       TELA 1: ONBOARDING CENTRALIZADO
-       ========================================================================= -->
-  <main id="telaOnboarding" class="container-onboarding">
-    <div class="card-onboarding">
-      <div class="cabecalho-card">
-        <h2>Configuração de Aprendizagem Adaptativa</h2>
-        <p>Personalize as preferências metodológicas e cognitivas para o estudo do Feudalismo Europeu.</p>
+    <!-- INTERFACE 1: BOAS-VINDAS -->
+    <section class="screen active" id="screen-1">
+      <div class="welcome-hero">
+        <span class="eyebrow">EDUCAÇÃO • TECNOLOGIA • INCLUSÃO</span>
+        <h1>Seu jeito de aprender importa.</h1>
+        <p>
+          Uma experiência de aprendizagem adaptada às suas preferências,
+          respeitando seu ritmo e suas formas de compreender a História.
+        </p>
+        <button class="btn primary" type="button" data-go="2">
+          Começar experiência →
+        </button>
       </div>
 
-      <form id="formOnboarding" onsubmit="salvarPerfil(event)">
-        
-        <!-- Pergunta 1: Nível de Dificuldade com Aprofundamento Historiográfico -->
-        <div class="campo-grupo">
-          <label for="campoDificuldade" class="label-obrigatorio">1. Nível de Aprofundamento Historiográfico:</label>
-          <select id="campoDificuldade" class="select-padrao" required>
-            <option value="Baixo" selected>Baixo — Análise historiográfica direta, com linguagem acessível e foco estrutural</option>
-            <option value="Médio">Médio — Interpretação documental intermediária e relações socioeconômicas</option>
-            <option value="Alto">Alto — Análise historiográfica densa, conceitos avançados e fontes documentais</option>
-          </select>
+      <div class="welcome-editorial">
+        <div class="welcome-editorial-copy">
+          <span class="editorial-kicker">NOSSA PROPOSTA</span>
+          <h2>Aprendizagem com respeito às diferenças.</h2>
+          <p>
+            A EduIA Inclusiva utiliza recursos digitais e estratégias
+            adaptativas para tornar o estudo mais acessível.
+          </p>
+          <p>
+            Cada estudante pode explorar os conteúdos de diferentes maneiras,
+            revisar informações e desenvolver conhecimentos.
+          </p>
         </div>
 
-        <!-- Pergunta 2: Estilo DUA / Mídia -->
-        <div class="campo-grupo">
-          <label for="campoEstilo" class="label-obrigatorio">2. Formato de Apresentação e Mídia Preferida:</label>
-          <select id="campoEstilo" class="select-padrao" required>
-            <option value="quadrinhos" selected>Quadrinhos / Diagramas Técnicos (Infográfico Sequencial)</option>
-            <option value="texto">Texto Corrido Analítico (Ensaio Historiográfico)</option>
-            <option value="mapa">Mapa Mental e Relações Estruturais (Esquemas em Blocos)</option>
-            <option value="audio">Áudio Orientado (Leitura e Síntese Pausada)</option>
-          </select>
+        <div class="welcome-editorial-aside">
+          <div class="editorial-line">
+            <span>01</span>
+            <div>
+              <strong>Personalização</strong>
+              <small>Conteúdo organizado conforme suas preferências.</small>
+            </div>
+          </div>
+          <div class="editorial-line">
+            <span>02</span>
+            <div>
+              <strong>Acessibilidade</strong>
+              <small>Recursos para diferentes necessidades de aprendizagem.</small>
+            </div>
+          </div>
+          <div class="editorial-line">
+            <span>03</span>
+            <div>
+              <strong>Autonomia</strong>
+              <small>Aprenda respeitando seu próprio ritmo.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERFACE 2: APRESENTAÇÃO -->
+    <section class="screen" id="screen-2">
+      <div class="section-heading">
+        <span class="section-label">CONHEÇA A PLATAFORMA</span>
+        <h1>Uma experiência pensada para você.</h1>
+        <p>Conheça os recursos disponíveis para apoiar sua aprendizagem.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon">📚</div>
+          <h3>Conteúdo adaptado</h3>
+          <p>Explicações organizadas em diferentes níveis de detalhamento.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">🎧</div>
+          <h3>Leitura em áudio</h3>
+          <p>Ouça os conteúdos utilizando o recurso de áudio.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">🖼️</div>
+          <h3>Aprendizagem visual</h3>
+          <p>Explore imagens históricas e quadrinhos explicativos.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">🧩</div>
+          <h3>Personalização</h3>
+          <p>Escolha recursos que facilitem sua compreensão.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">📝</div>
+          <h3>Atividades</h3>
+          <p>Revise o conteúdo com perguntas e quiz.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon">🌈</div>
+          <h3>Acessibilidade</h3>
+          <p>Controles de tamanho de texto e navegação organizada.</p>
+        </article>
+      </div>
+
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" data-go="1">← Voltar</button>
+        <button class="btn primary" type="button" data-go="3">Continuar →</button>
+      </div>
+    </section>
+
+    <!-- INTERFACE 3: CADASTRO -->
+    <section class="screen" id="screen-3">
+      <div class="section-heading">
+        <span class="section-label">SEU PERFIL</span>
+        <h1>Vamos nos conhecer?</h1>
+        <p>Preencha seus dados para iniciar sua experiência.</p>
+      </div>
+
+      <form class="form-card" id="student-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="student-name">Nome completo</label>
+            <input id="student-name" name="name" type="text" placeholder="Digite seu nome" required>
+          </div>
+
+          <div class="form-group">
+            <label for="student-age">Idade</label>
+            <input id="student-age" name="age" type="number" min="10" max="100" placeholder="Sua idade" required>
+          </div>
+
+          <div class="form-group">
+            <label for="student-gender">Gênero</label>
+            <select id="student-gender" name="gender" required>
+              <option value="">Selecione</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Prefiro não dizer">Prefiro não dizer</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="student-grade">Ano escolar</label>
+            <select id="student-grade" name="grade" required>
+              <option value="">Selecione</option>
+              <option value="1º ano do Ensino Médio">1º ano do Ensino Médio</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="student-school">Nome da escola</label>
+            <input id="student-school" name="school" type="text" placeholder="Nome da escola" required>
+          </div>
+
+          <div class="form-group">
+            <label for="student-school-type">Tipo de escola</label>
+            <select id="student-school-type" name="schoolType" required>
+              <option value="">Selecione</option>
+              <option value="Pública">Pública</option>
+              <option value="Privada">Privada</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Pergunta 3: Painel do Tutor -->
-        <div class="campo-grupo">
-          <label for="campoTutor" class="label-obrigatorio">3. Painel de Suporte ao Tutor / AEE:</label>
-          <select id="campoTutor" class="select-padrao" required>
-            <option value="Sim" selected>Ativado — Recomendações pedagógicas para mediador/educador</option>
-            <option value="Não">Desativado — Navegação autônoma do estudante</option>
-          </select>
-        </div>
+        <p class="form-hint">
+          🔒 Nesta versão de demonstração, as informações ficam armazenadas
+          no navegador utilizado.
+        </p>
 
-        <!-- Pergunta 4: Entrada de Hiperfoco -->
-        <div class="campo-grupo">
-          <label for="textoHiperfoco" class="label-obrigatorio">4. Tópico de Interesse / Hiperfoco Técnico:</label>
-          <input type="text" id="textoHiperfoco" class="input-padrao" placeholder="Ex.: mecânica, engrenagens, robótica, motores, castelos..." required>
-          <span class="dica-campo">A plataforma contextualizará os mecanismos socioeconômicos feudais utilizando pontes conceituais com sua área de interesse.</span>
+        <div class="navigation-buttons">
+          <button class="btn outline" type="button" data-go="2">← Voltar</button>
+          <button class="btn primary" type="submit">Salvar e continuar →</button>
         </div>
-
-        <button type="submit" class="btn-iniciar-aula">Iniciar Aula Adaptada</button>
-        <button type="button" class="btn-acesso-rapido" onclick="entrarDiretoNaAula()">Acesso Rápido com Engenharia Mecânica Medieval</button>
       </form>
-    </div>
+    </section>
+
+    <!-- INTERFACE 4: PREFERÊNCIAS -->
+    <section class="screen" id="screen-4">
+      <div class="section-heading">
+        <span class="section-label">SEU JEITO DE APRENDER</span>
+        <h1>Como você aprende melhor?</h1>
+        <p>Escolha os recursos que ajudam você a compreender os conteúdos.</p>
+      </div>
+
+      <form class="form-card" id="preferences-form">
+
+        <div class="form-group">
+          <label>1. Quais recursos você prefere? (Pode escolher mais de um.)</label>
+          <div class="preference-grid">
+            <label class="preference-option">
+              <input type="checkbox" name="learningStyle" value="text">
+              <span><strong>📖 Textos</strong><small>Explicações escritas.</small></span>
+            </label>
+            <label class="preference-option">
+              <input type="checkbox" name="learningStyle" value="images">
+              <span><strong>🖼️ Imagens</strong><small>Fotografias e ilustrações.</small></span>
+            </label>
+            <label class="preference-option">
+              <input type="checkbox" name="learningStyle" value="comics">
+              <span><strong>💬 Quadrinhos</strong><small>Histórias em cenas ilustradas.</small></span>
+            </label>
+            <label class="preference-option">
+              <input type="checkbox" name="learningStyle" value="audio">
+              <span><strong>🎧 Áudio</strong><small>Ouvir as explicações.</small></span>
+            </label>
+            <label class="preference-option">
+              <input type="checkbox" name="learningStyle" value="video">
+              <span><strong>🎬 Vídeos</strong><small>Conteúdo audiovisual.</small></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="text-level">2. Qual tamanho de explicação você prefere?</label>
+          <select id="text-level" name="textLevel" required>
+            <option value="short">Curta e direta</option>
+            <option value="medium" selected>Intermediária</option>
+            <option value="detailed">Completa e detalhada</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>3. O que ajuda quando uma explicação fica difícil? (Até duas opções.)</label>
+          <div class="preference-grid">
+            <label class="preference-option">
+              <input type="checkbox" name="helpStyle" value="simpler">
+              <span><strong>💡 Linguagem simples</strong><small>Palavras mais fáceis.</small></span>
+            </label>
+            <label class="preference-option">
+              <input type="checkbox" name="helpStyle" value="examples">
+              <span><strong>📌 Exemplos</strong><small>Situações para entender melhor.</small></span>
+            </label>
+            <label class="preference-option">
+              <input type="checkbox" name="helpStyle" value="images">
+              <span><strong>🖼️ Imagens</strong><small>Apoio visual.</small></span>
+            </label>
+            <label class="preference-option">
+              <input type="checkbox" name="helpStyle" value="repeat">
+              <span><strong>🔁 Repetição</strong><small>Explicar novamente.</small></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="study-mode">4. Como prefere estudar?</label>
+          <select id="study-mode" name="studyMode" required>
+            <option value="alone">Sozinho(a)</option>
+            <option value="accompanied">Acompanhado(a)</option>
+            <option value="both">Das duas maneiras</option>
+          </select>
+        </div>
+
+        <div class="navigation-buttons">
+          <button class="btn outline" type="button" data-go="3">← Voltar</button>
+          <button class="btn primary" type="submit">Salvar preferências →</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- INTERFACE 5: PERÍODOS HISTÓRICOS -->
+    <section class="screen" id="screen-5">
+      <div class="section-heading">
+        <span class="section-label">HISTÓRIA</span>
+        <h1>Qual período você deseja estudar?</h1>
+        <p>Escolha um período para começar sua aula adaptada.</p>
+      </div>
+
+      <div class="period-grid">
+        <button class="period-card" type="button" data-period="antiguidade">
+          <span class="period-icon">🏺</span>
+          <h3>Idade Antiga</h3>
+          <p>Egito, Grécia, Roma e outras civilizações antigas.</p>
+        </button>
+
+        <button class="period-card" type="button" data-period="idade-media">
+          <span class="period-icon">🏰</span>
+          <h3>Idade Média</h3>
+          <p>Feudalismo, sociedade medieval e transformações culturais.</p>
+        </button>
+
+        <button class="period-card" type="button" data-period="idade-moderna">
+          <span class="period-icon">⛵</span>
+          <h3>Idade Moderna</h3>
+          <p>Renascimento, navegações e mudanças políticas.</p>
+        </button>
+
+        <button class="period-card" type="button" data-period="idade-contemporanea">
+          <span class="period-icon">🌎</span>
+          <h3>Idade Contemporânea</h3>
+          <p>Revoluções, industrialização e mundo atual.</p>
+        </button>
+      </div>
+
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" data-go="4">← Voltar</button>
+      </div>
+    </section>
+
+    <!-- INTERFACE 6: PERSONALIZAÇÃO -->
+    <section class="screen" id="screen-6">
+      <div class="section-heading">
+        <span class="section-label">SUA EXPERIÊNCIA</span>
+        <h1 id="personalization-title">Preparando sua aprendizagem</h1>
+        <p>Veja como suas escolhas serão utilizadas para organizar o conteúdo.</p>
+      </div>
+
+      <div class="personalization-panel">
+        <div class="personalization-details" id="personalization-summary"></div>
+        <div id="personalization-details"></div>
+      </div>
+
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" data-go="5">← Voltar</button>
+        <button class="btn primary" type="button" data-go="7">Ver minha aula →</button>
+      </div>
+    </section>
+
+    <!-- INTERFACE 7: INTRODUÇÃO À AULA -->
+    <section class="screen" id="screen-7">
+      <div class="lesson-hero">
+        <div class="lesson-symbol" id="lesson-symbol">📚</div>
+        <span class="section-label">SUA AULA DE HISTÓRIA</span>
+        <h1 id="lesson-title">Título do período</h1>
+        <p id="lesson-description">Descrição do período histórico.</p>
+      </div>
+
+      <div class="content-card">
+        <h2 id="content-period-title">Vamos começar?</h2>
+        <p id="lesson-intro-text"></p>
+        <div class="lesson-highlights" id="lesson-highlights"></div>
+      </div>
+
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" data-go="6">← Voltar</button>
+        <button class="btn primary" type="button" data-go="8">Começar a estudar →</button>
+      </div>
+    </section>
+
+    <!-- INTERFACE 8: AULA ADAPTADA -->
+    <section class="screen" id="screen-8">
+      <div class="section-heading">
+        <span class="section-label">CONTEÚDO ADAPTADO</span>
+        <h1 id="content-title">Explorando a História</h1>
+        <p>Avance pelos assuntos e aprenda no seu próprio ritmo.</p>
+      </div>
+
+      <div class="lesson-tabs">
+        <button class="lesson-tab active" type="button" data-topic="introduction">Introdução</button>
+        <button class="lesson-tab" type="button" data-topic="context">Contexto histórico</button>
+        <button class="lesson-tab" type="button" data-topic="events">Acontecimentos</button>
+        <button class="lesson-tab" type="button" data-topic="characters">Personagens</button>
+        <button class="lesson-tab" type="button" data-topic="consequences">Consequências</button>
+        <button class="lesson-tab" type="button" data-topic="curiosities">Curiosidades</button>
+      </div>
+
+      <article class="lesson-content-card">
+        <div id="lesson-content"></div>
+      </article>
+
+      <div class="audio-controls">
+        <button class="btn secondary" type="button" id="speak-content">🔊 Ouvir explicação</button>
+        <button class="btn outline" type="button" id="stop-audio">⏹ Parar áudio</button>
+      </div>
+
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" data-go="7">← Voltar</button>
+        <button class="btn primary" type="button" data-go="9">Aprender visualmente →</button>
+      </div>
+    </section>
+
+    <!-- INTERFACE 9: APRENDIZAGEM VISUAL -->
+    <section class="screen" id="screen-9">
+      <div class="section-heading">
+        <span class="section-label">APRENDIZAGEM VISUAL</span>
+        <h1>História em imagens e quadrinhos.</h1>
+        <p>Explore acontecimentos históricos por meio de cenas ilustradas.</p>
+      </div>
+
+      <div class="content-card">
+        <h2 id="comic-title">Quadrinhos históricos</h2>
+        <div class="comic-grid" id="comic-panels"></div>
+      </div>
+
+      <div class="content-card">
+        <h2>Galeria histórica</h2>
+        <p>Observe imagens relacionadas ao período estudado.</p>
+        <div class="history-gallery" id="history-gallery"></div>
+      </div>
+
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" data-go="8">← Voltar</button>
+        <button class="btn primary" type="button" data-go="10">Ver resumos →</button>
+      </div>
+    </section>
+
+    <!-- INTERFACE 10: RESUMOS E MAPAS -->
+    <section class="screen" id="screen-10">
+      <div class="section-heading">
+        <span class="section-label">REVISÃO</span>
+        <h1>Vamos organizar o que aprendemos?</h1>
+        <p>Escolha uma forma de revisar o conteúdo.</p>
+      </div>
+
+      <div class="summary-models">
+        <button class="btn secondary" type="button" data-summary-model="summary">
+          📋 Resumo simplificado
+        </button>
+        <button class="btn secondary" type="button" data-summary-model="mindmap">
+          🧠 Mapa mental
+        </button>
+      </div>
+
+      <article class="summary-display">
+        <h2 id="summary-title">Resumo do período</h2>
+        <div class="summary-content" id="summary-content"></div>
+        <div id="mind-map-title"></div>
+        <div id="mind-map"></div>
+      </article>
+
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" data-go="9">← Voltar</button>
+        <button class="btn primary" type="button" data-go="11">Fazer atividade →</button>
+      </div>
+    </section>
+
+    <!-- INTERFACE 11: QUIZ -->
+    <section class="screen" id="screen-11">
+      <div class="section-heading">
+        <span class="section-label">TESTE SEUS CONHECIMENTOS</span>
+        <h1>Hora de praticar!</h1>
+        <p>Responda às questões sobre o período estudado.</p>
+      </div>
+
+      <div class="quiz-card">
+        <div class="quiz-progress">
+          <div class="quiz-status">
+            <span id="question-counter">Questão 1</span>
+            <span id="quiz-progress-label">0%</span>
+          </div>
+          <div class="quiz-progress-track">
+            <div id="quiz-progress-fill"></div>
+          </div>
+        </div>
+
+        <h2 id="quiz-question">Pergunta aparecerá aqui.</h2>
+        <div class="quiz-options" id="quiz-options"></div>
+        <div class="quiz-feedback" id="quiz-feedback" aria-live="polite"></div>
+
+        <button class="btn primary" type="button" id="quiz-next" disabled>
+          Próxima questão →
+        </button>
+      </div>
+
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" data-go="10">← Voltar</button>
+      </div>
+    </section>
+
+    <!-- INTERFACE 12: RESULTADO -->
+    <section class="screen" id="screen-12">
+      <div class="result-card">
+        <div class="result-symbol">🏆</div>
+        <span class="section-label">SUA JORNADA</span>
+        <h1>Você concluiu sua atividade!</h1>
+        <p id="result-message">Confira seu resultado.</p>
+
+        <div class="result-score" id="result-score">0%</div>
+        <div class="result-details" id="result-details"></div>
+
+        <div class="navigation-buttons">
+          <button class="btn outline" type="button" id="review-lesson">
+            Revisar conteúdo
+          </button>
+          <button class="btn primary" type="button" id="restart-experience">
+            Nova experiência →
+          </button>
+        </div>
+      </div>
+    </section>
+
   </main>
 
-  <!-- =========================================================================
-       TELA 2: ÁREA DE ESTUDOS E AULA (INICIA OCULTA)
-       ========================================================================= -->
-  <div id="telaAula" class="layout-aula" style="display: none;">
-    
-    <!-- Menu Lateral Adaptativo -->
-    <aside id="menuLateral" class="menu-lateral" aria-label="Menu de Navegação Adaptativa">
-      
-      <section class="painel-lateral">
-        <h3>Formato de Exibição</h3>
-        <div class="botoes-modos">
-          <button class="btn-modo" id="btnModoTexto" onclick="trocarModo('texto')">Texto Analítico</button>
-          <button class="btn-modo" id="btnModoQuadrinhos" onclick="trocarModo('quadrinhos')">Quadrinhos / Infográfico</button>
-          <button class="btn-modo" id="btnModoMapa" onclick="trocarModo('mapa')">Mapa Mental</button>
-          <button class="btn-modo" id="btnModoAudio" onclick="trocarModo('audio')">Modo Áudio</button>
+  <footer class="app-footer">
+    <span>EduIA Inclusiva</span>
+    <span>Tecnologia a serviço da aprendizagem e da inclusão.</span>
+  </footer>
+
+</div>
+
+<!-- PAINEL PRIVADO DA CRIADORA -->
+<div class="creator-overlay" id="creator-overlay" aria-hidden="true">
+  <section class="creator-modal" role="dialog" aria-modal="true" aria-labelledby="creator-title">
+
+    <button type="button" class="creator-close" id="creator-close" aria-label="Fechar painel">
+      ×
+    </button>
+
+    <!-- LOGIN -->
+    <div class="creator-login-section" id="creator-login-section">
+      <div class="creator-icon">🔐</div>
+      <span class="section-label">ACESSO RESTRITO</span>
+      <h2 id="creator-title">Painel da criadora</h2>
+      <p>Entre com a conta autorizada da criadora.</p>
+
+      <form class="creator-login-form" id="creator-login-form">
+        <div class="form-group">
+          <label for="creator-email">E-mail da criadora</label>
+          <input id="creator-email" name="email" type="email" placeholder="Digite seu e-mail" autocomplete="username" required>
         </div>
+        <div class="form-group">
+          <label for="creator-password">Senha de acesso</label>
+          <input
+            id="creator-password"
+            name="password"
+            type="password"
+            placeholder="Digite sua senha"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <button class="btn primary creator-login-button" type="submit">
+          Entrar no painel →
+        </button>
+
+        <p class="creator-error" id="creator-error" role="alert"></p>
+        <small class="creator-security-note">
+          Área destinada à administração do projeto.
+        </small>
+      </form>
+    </div>
+
+    <!-- PAINEL ADMINISTRATIVO -->
+    <div class="creator-dashboard" id="creator-dashboard" hidden>
+      <div class="creator-dashboard-header">
+        <span class="section-label">ADMINISTRAÇÃO</span>
+        <h2>Painel da criadora</h2>
+        <p>Acompanhamento dos registros desta demonstração.</p>
+      </div>
+
+      <div class="creator-stats">
+        <article class="creator-stat-card">
+          <span>👁️</span>
+          <strong id="stat-accesses">0</strong>
+          <small>Acessos registrados</small>
+        </article>
+
+        <article class="creator-stat-card">
+          <span>👩‍🎓</span>
+          <strong id="stat-students">0</strong>
+          <small>Estudantes cadastrados</small>
+        </article>
+
+        <article class="creator-stat-card">
+          <span>📝</span>
+          <strong id="stat-quizzes">0</strong>
+          <small>Atividades concluídas</small>
+        </article>
+
+        <article class="creator-stat-card">
+          <span>📊</span>
+          <strong id="stat-average">0%</strong>
+          <small>Média de aproveitamento</small>
+        </article>
+      </div>
+
+      <section class="creator-section">
+        <h3>Estudantes cadastrados</h3>
+        <div class="creator-table-wrapper">
+          <table class="creator-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Idade</th>
+                <th>Gênero</th>
+                <th>Escola</th>
+                <th>Tipo</th>
+                <th>Período</th>
+                <th>Resultado</th>
+              </tr>
+            </thead>
+            <tbody id="students-table-body">
+              <tr>
+                <td colspan="7">Nenhum cadastro encontrado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button class="btn secondary" type="button" id="export-students">
+          📥 Exportar registros
+        </button>
       </section>
 
-      <section id="secaoPainelTutor" class="painel-lateral painel-tutor-destaque">
-        <h3>Orientações Pedagógicas (Tutor/AEE)</h3>
-        <p id="textoOrientacaoTutor">O estudante realiza a leitura adaptada em formato multinível. Permita o processamento em tempo livre sem cobrança temporal externa.</p>
+      <section class="creator-section">
+        <h3>Preferências de aprendizagem</h3>
+        <div id="preferences-statistics"></div>
       </section>
 
-      <section class="painel-lateral painel-aviso-seguro">
-        <h3>Estrutura Livre de Ansiedade</h3>
-        <p>Ambiente autônomo sem contadores regressivos. Faça pausas e releituras conforme sua necessidade cognitiva.</p>
+      <section class="creator-section">
+        <h3>Resultados das atividades</h3>
+        <div id="quiz-statistics"></div>
       </section>
 
-    </aside>
+      <div class="navigation-buttons">
+        <button class="btn outline" type="button" id="creator-logout">
+          Sair do painel
+        </button>
+      </div>
+    </div>
 
-    <!-- Área Principal de Renderização da Lição -->
-    <main id="conteudoPrincipal" class="conteudo-principal" tabindex="-1">
-      <article id="areaRenderizacaoLicao" class="area-renderizacao-licao" aria-live="polite">
-        <!-- Injetado dinamicamente via script.js -->
-      </article>
-    </main>
+  </section>
+</div>
 
-  </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js" defer></script>
+  <script src="script.js" defer></script>
 
-  <!-- Botão Flutuante para Sair do Modo de Foco -->
-  <button id="btnSairModoFoco" class="btn-sair-foco" onclick="alternarModoFoco()" style="display: none;" aria-label="Sair do Modo de Foco">
-    Sair do Modo de Foco
-  </button>
-
-  <script src="script.js"></script>
 </body>
 </html>
